@@ -212,6 +212,37 @@
                         </div>
                     </div>
 
+                    <!-- Dashboard Filter Bar -->
+                    <div class="card glass flex-space-between flex-wrap" style="padding: 1rem 1.5rem; margin-bottom: 1.5rem; gap: 1rem; align-items: center; justify-content: space-between;">
+                        <div class="flex-align-center" style="gap: 0.5rem; display: flex; align-items: center;">
+                            <i class="fa-regular fa-calendar-check text-muted" style="font-size: 1.25rem;"></i>
+                            <span class="font-bold text-sm" style="color: var(--text-muted); font-size: 0.9rem;">Date Filter:</span>
+                        </div>
+                        <div class="flex-align-center flex-wrap" style="gap: 0.75rem; display: flex; align-items: center; flex-wrap: wrap;">
+                            <div class="select-wrapper">
+                                <select id="dashboard-date-filter-type" class="form-control" style="width: auto; min-width: 140px; padding: 0.4rem 2rem 0.4rem 1rem; font-size: 0.875rem;">
+                                    <option value="all" selected>All Time</option>
+                                    <option value="month">Select Month</option>
+                                    <option value="custom">Custom Range</option>
+                                </select>
+                            </div>
+
+                            <!-- Month Picker Display -->
+                            <div id="dashboard-selected-month-display" class="hidden">
+                                <button type="button" class="btn btn-sm btn-outline" id="btn-change-month-filter" style="padding: 0.4rem 1rem; font-size: 0.875rem; display: flex; align-items: center; gap: 0.4rem;">
+                                    <i class="fa-regular fa-calendar-days"></i> <span id="month-filter-label">July 2026</span>
+                                </button>
+                            </div>
+
+                            <!-- Custom Date Range Display -->
+                            <div id="dashboard-custom-date-wrapper" class="flex-align-center hidden" style="gap: 0.5rem; display: flex; align-items: center;">
+                                <input type="date" id="dashboard-date-from" class="form-control" style="padding: 0.35rem; font-size: 0.875rem; width: auto;">
+                                <span class="text-sm text-muted" style="color: var(--text-muted);">to</span>
+                                <input type="date" id="dashboard-date-to" class="form-control" style="padding: 0.35rem; font-size: 0.875rem; width: auto;">
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Mini Stat Cards -->
                     <div class="metrics-grid">
                         <!-- Stat Card 1 -->
@@ -846,7 +877,7 @@
                                     <thead>
                                         <tr>
                                             <th>Date</th>
-                                            <th>Classification</th>
+                                            <th>Classification & Type</th>
                                             <th>Title</th>
                                             <th>Frequency</th>
                                             <th class="text-right">Amount</th>
@@ -945,7 +976,10 @@
         <div class="modal-card glass">
             <div class="modal-header">
                 <h4 id="personal-income-modal-title">Log Personal Income</h4>
-                <button class="btn-close" id="close-p-income-modal">&times;</button>
+                <div class="flex items-center gap-2" style="display: flex; align-items: center;">
+                    <button type="button" class="btn btn-xs btn-outline" id="btn-fetch-personal-income" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; border-radius: var(--radius-sm);"><i class="fa-solid fa-cloud-arrow-down"></i> Fetch Data</button>
+                    <button type="button" class="btn-close" id="close-p-income-modal" style="margin-left: 0.5rem;">&times;</button>
+                </div>
             </div>
             <form id="personal-income-form" class="app-form">
                 <input type="hidden" id="personal-income-id">
@@ -1004,7 +1038,10 @@
         <div class="modal-card glass">
             <div class="modal-header">
                 <h4 id="personal-expense-modal-title">Log Personal Expense</h4>
-                <button class="btn-close" id="close-p-expense-modal">&times;</button>
+                <div class="flex items-center gap-2" style="display: flex; align-items: center;">
+                    <button type="button" class="btn btn-xs btn-outline" id="btn-fetch-personal-expense" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; border-radius: var(--radius-sm);"><i class="fa-solid fa-cloud-arrow-down"></i> Fetch Data</button>
+                    <button type="button" class="btn-close" id="close-p-expense-modal" style="margin-left: 0.5rem;">&times;</button>
+                </div>
             </div>
             <form id="personal-expense-form" class="app-form">
                 <input type="hidden" id="personal-expense-id">
@@ -1048,6 +1085,23 @@
                     <input type="checkbox" id="personal-expense-is-subscription" class="form-checkbox">
                     <label for="personal-expense-is-subscription" class="checkbox-label">Flag as recurring Subscription</label>
                 </div>
+                <!-- Subscription Sub-settings wrapper -->
+                <div id="personal-expense-subscription-sub-settings" class="hidden" style="border-left: 2px solid var(--primary); padding-left: 1rem; margin-bottom: 1rem;">
+                    <div class="input-group">
+                        <label>Subscription Status</label>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <select id="personal-expense-sub-status" style="width: 150px;">
+                                <option value="subscribe" selected>Subscribe</option>
+                                <option value="unsubscribe">Unsubscribe</option>
+                            </select>
+                            <span id="personal-expense-status-badge" class="badge status-paid">Subscribed</span>
+                        </div>
+                    </div>
+                    <div id="personal-expense-unsubscribe-date-wrapper" class="input-group hidden">
+                        <label for="personal-expense-unsubscribe-date">Unsubscribe Date</label>
+                        <input type="date" id="personal-expense-unsubscribe-date">
+                    </div>
+                </div>
                 <div class="input-group">
                     <label for="personal-expense-notes">Notes</label>
                     <textarea id="personal-expense-notes" rows="2" placeholder="Remarks..."></textarea>
@@ -1065,7 +1119,10 @@
         <div class="modal-card glass">
             <div class="modal-header">
                 <h4 id="business-income-modal-title">Log Business Revenue</h4>
-                <button class="btn-close" id="close-b-income-modal">&times;</button>
+                <div class="flex items-center gap-2" style="display: flex; align-items: center;">
+                    <button type="button" class="btn btn-xs btn-outline" id="btn-fetch-business-income" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; border-radius: var(--radius-sm);"><i class="fa-solid fa-cloud-arrow-down"></i> Fetch Data</button>
+                    <button type="button" class="btn-close" id="close-b-income-modal" style="margin-left: 0.5rem;">&times;</button>
+                </div>
             </div>
             <form id="business-income-form" class="app-form">
                 <input type="hidden" id="business-income-id">
@@ -1120,7 +1177,10 @@
         <div class="modal-card glass">
             <div class="modal-header">
                 <h4 id="business-expense-modal-title">Log Business Expense</h4>
-                <button class="btn-close" id="close-b-expense-modal">&times;</button>
+                <div class="flex items-center gap-2" style="display: flex; align-items: center;">
+                    <button type="button" class="btn btn-xs btn-outline" id="btn-fetch-business-expense" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; border-radius: var(--radius-sm);"><i class="fa-solid fa-cloud-arrow-down"></i> Fetch Data</button>
+                    <button type="button" class="btn-close" id="close-b-expense-modal" style="margin-left: 0.5rem;">&times;</button>
+                </div>
             </div>
             <form id="business-expense-form" class="app-form">
                 <input type="hidden" id="business-expense-id">
@@ -1163,6 +1223,23 @@
                 <div class="input-group-row">
                     <input type="checkbox" id="business-expense-is-subscription" class="form-checkbox">
                     <label for="business-expense-is-subscription" class="checkbox-label">Flag as recurring Subscription</label>
+                </div>
+                <!-- Subscription Sub-settings wrapper -->
+                <div id="business-expense-subscription-sub-settings" class="hidden" style="border-left: 2px solid var(--primary); padding-left: 1rem; margin-bottom: 1rem;">
+                    <div class="input-group">
+                        <label>Subscription Status</label>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <select id="business-expense-sub-status" style="width: 150px;">
+                                <option value="subscribe" selected>Subscribe</option>
+                                <option value="unsubscribe">Unsubscribe</option>
+                            </select>
+                            <span id="business-expense-status-badge" class="badge status-paid">Subscribed</span>
+                        </div>
+                    </div>
+                    <div id="business-expense-unsubscribe-date-wrapper" class="input-group hidden">
+                        <label for="business-expense-unsubscribe-date">Unsubscribe Date</label>
+                        <input type="date" id="business-expense-unsubscribe-date">
+                    </div>
                 </div>
                 <div class="input-group">
                     <label for="business-expense-notes">Notes / Vendor details</label>
@@ -1274,6 +1351,71 @@
                     <button type="submit" class="btn btn-primary">Save Fee</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Select Month Modal Popup -->
+    <div id="dashboard-month-modal" class="modal-overlay hidden">
+        <div class="modal-card glass" style="max-width: 400px;">
+            <div class="modal-header">
+                <h4>Select Month / Year</h4>
+                <button class="btn-close" id="close-dashboard-month-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group">
+                    <label for="dashboard-month-picker">Filter Month *</label>
+                    <input type="month" id="dashboard-month-picker" class="form-control" required>
+                    <span class="input-help">Pick a month and year to filter dashboard datasets.</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" id="btn-cancel-dashboard-month">Cancel</button>
+                <button type="button" class="btn btn-primary" id="btn-apply-dashboard-month">Apply Filter</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Autofill Template Selection Modal -->
+    <div id="autofill-modal" class="modal-overlay hidden" style="z-index: 2000;">
+        <div class="modal-card glass" style="max-width: 500px;">
+            <div class="modal-header">
+                <h4>Autofill Transaction Data</h4>
+                <button class="btn-close" id="close-autofill-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Phase 1: Choose Interval -->
+                <div id="autofill-frequency-selector" class="flex gap-4 mb-4" style="display: flex; gap: 1rem;">
+                    <button type="button" class="btn btn-outline flex-1" id="btn-autofill-monthly" style="flex: 1; padding: 1.5rem; text-align: center; border-radius: var(--radius-md);">
+                        <i class="fa-solid fa-calendar-days fa-2x" style="display: block; margin-bottom: 0.5rem;"></i> Monthly Previous Data
+                    </button>
+                    <button type="button" class="btn btn-outline flex-1" id="btn-autofill-yearly" style="flex: 1; padding: 1.5rem; text-align: center; border-radius: var(--radius-md);">
+                        <i class="fa-solid fa-calendar-minus fa-2x" style="display: block; margin-bottom: 0.5rem;"></i> Yearly Previous Data
+                    </button>
+                </div>
+                
+                <!-- Phase 2: Selection List -->
+                <div id="autofill-list-wrapper" class="hidden">
+                    <h5 class="mb-3 text-muted">Select a record to auto-fill your form:</h5>
+                    <div class="table-wrapper" style="max-height: 250px; overflow-y: auto; border: 1px solid var(--border-glass); border-radius: var(--radius-sm);">
+                        <table class="data-table" style="font-size: 0.85rem; width: 100%;">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Category</th>
+                                    <th>Amount</th>
+                                    <th class="text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="autofill-list-body">
+                                <!-- Autofill records list -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <button type="button" class="btn btn-outline btn-sm w-full mt-4" id="btn-autofill-back-to-frequency" style="width: 100%; border-radius: var(--radius-sm);">
+                        <i class="fa-solid fa-chevron-left"></i> Back
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
