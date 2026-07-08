@@ -14,7 +14,12 @@ const pb = new PocketBase(pbUrl);
 let currentUser = null;
 let currentTab = 'dashboard';
 let currentDashboardSegment = 'all'; // 'all', 'personal', 'business', 'investments'
+let dashboardDateFilterType = 'all'; // 'all', 'month', 'custom'
+let dashboardDateMonth = '';         // e.g. '2026-07'
+let dashboardDateFrom = '';          // e.g. '2026-07-01'
+let dashboardDateTo = '';            // e.g. '2026-07-31'
 let charts = {};
+let currentAutofillContext = '';
 
 // Cache for dashboard data
 let appData = {
@@ -58,6 +63,52 @@ function formatDateToDMY(dateStr) {
         return `${parts[2]}/${parts[1]}/${parts[0]}`;
     }
     return dateStr;
+}
+
+// Check if a date string falls inside the active dashboard date filters
+function isDateInFilter(dateStr) {
+    if (!dateStr) return false;
+    // Strip timestamps to avoid offset issues
+    const date = new Date(dateStr);
+    
+    if (dashboardDateFilterType === 'all') {
+        return true;
+    }
+    
+    if (dashboardDateFilterType === 'month') {
+        if (!dashboardDateMonth) return true;
+        const [year, month] = dashboardDateMonth.split('-');
+        const filterYear = parseInt(year, 10);
+        const filterMonth = parseInt(month, 10) - 1;
+        return date.getFullYear() === filterYear && date.getMonth() === filterMonth;
+    }
+    
+    if (dashboardDateFilterType === 'custom') {
+        if (dashboardDateFrom) {
+            const fromDate = new Date(dashboardDateFrom);
+            fromDate.setHours(0, 0, 0, 0);
+            if (date < fromDate) return false;
+        }
+        if (dashboardDateTo) {
+            const toDate = new Date(dashboardDateTo);
+            toDate.setHours(23, 59, 59, 999);
+            if (date > toDate) return false;
+        }
+        return true;
+    }
+    return true;
+}
+
+// Convert month picker string (e.g. '2026-07') to friendly label ('July 2026')
+function formatMonthYearLabel(monthStr) {
+    if (!monthStr) return 'Select Month';
+    const [year, month] = monthStr.split('-');
+    const monthNames = [
+        "January", "February", "March", "April", "May", "June", 
+        "July", "August", "September", "October", "November", "December"
+    ];
+    const mIdx = parseInt(month, 10) - 1;
+    return `${monthNames[mIdx]} ${year}`;
 }
 
 // Initialize Application state and check auth
@@ -312,6 +363,79 @@ function setupEventListeners() {
         document.querySelector('.auth-subtitle').textContent = 'Wealth Managment Portal';
     });
 
+    // Dashboard Date Filter Handlers
+    const dateFilterTypeSelect = document.getElementById('dashboard-date-filter-type');
+    const selectedMonthDisplay = document.getElementById('dashboard-selected-month-display');
+    const customDateWrapper = document.getElementById('dashboard-custom-date-wrapper');
+    
+    // Store previous working values
+    let prevFilterType = 'all';
+
+    if (dateFilterTypeSelect) {
+        dateFilterTypeSelect.addEventListener('change', (e) => {
+            const val = e.target.value;
+            if (val === 'all') {
+                dashboardDateFilterType = 'all';
+                prevFilterType = 'all';
+                selectedMonthDisplay.classList.add('hidden');
+                customDateWrapper.classList.add('hidden');
+                renderDashboardStats();
+            } else if (val === 'month') {
+                openModal('dashboard-month-modal');
+            } else if (val === 'custom') {
+                dashboardDateFilterType = 'custom';
+                prevFilterType = 'custom';
+                selectedMonthDisplay.classList.add('hidden');
+                customDateWrapper.classList.remove('hidden');
+                renderDashboardStats();
+            }
+        });
+    }
+
+    const closeMonthModal = () => {
+        closeModal('dashboard-month-modal');
+        if (dateFilterTypeSelect) {
+            dateFilterTypeSelect.value = dashboardDateFilterType;
+        }
+    };
+
+    document.getElementById('close-dashboard-month-modal').onclick = closeMonthModal;
+    document.getElementById('btn-cancel-dashboard-month').onclick = closeMonthModal;
+
+    document.getElementById('btn-apply-dashboard-month').onclick = () => {
+        const monthVal = document.getElementById('dashboard-month-picker').value;
+        if (!monthVal) {
+            showToast('Please select a valid month and year.', 'warning');
+            return;
+        }
+        dashboardDateMonth = monthVal;
+        dashboardDateFilterType = 'month';
+        prevFilterType = 'month';
+
+        document.getElementById('month-filter-label').textContent = formatMonthYearLabel(monthVal);
+        selectedMonthDisplay.classList.remove('hidden');
+        customDateWrapper.classList.add('hidden');
+
+        closeModal('dashboard-month-modal');
+        renderDashboardStats();
+    };
+
+    document.getElementById('btn-change-month-filter').onclick = () => {
+        openModal('dashboard-month-modal');
+    };
+
+    const dateFromInput = document.getElementById('dashboard-date-from');
+    const dateToInput = document.getElementById('dashboard-date-to');
+    if (dateFromInput && dateToInput) {
+        const onCustomDateChange = () => {
+            dashboardDateFrom = dateFromInput.value;
+            dashboardDateTo = dateToInput.value;
+            renderDashboardStats();
+        };
+        dateFromInput.addEventListener('change', onCustomDateChange);
+        dateToInput.addEventListener('change', onCustomDateChange);
+    }
+
     // Theme Toggle
     document.getElementById('theme-toggle').addEventListener('click', () => {
         const isLight = document.body.getAttribute('data-theme') === 'light';
@@ -448,6 +572,9 @@ function setupEventListeners() {
         document.getElementById('personal-expense-form').reset();
         document.getElementById('personal-expense-id').value = '';
         document.getElementById('personal-expense-modal-title').textContent = 'Log Personal Expense';
+        document.getElementById('personal-expense-subscription-sub-settings').classList.add('hidden');
+        document.getElementById('personal-expense-sub-status').value = 'subscribe';
+        updateSubscriptionStatusUI('personal-expense');
         openModal('personal-expense-modal');
     };
 
@@ -462,6 +589,9 @@ function setupEventListeners() {
         document.getElementById('business-expense-form').reset();
         document.getElementById('business-expense-id').value = '';
         document.getElementById('business-expense-modal-title').textContent = 'Log Business Expense';
+        document.getElementById('business-expense-subscription-sub-settings').classList.add('hidden');
+        document.getElementById('business-expense-sub-status').value = 'subscribe';
+        updateSubscriptionStatusUI('business-expense');
         openModal('business-expense-modal');
     };
 
@@ -483,6 +613,49 @@ function setupEventListeners() {
     document.getElementById('business-expense-form').onsubmit = (e) => saveTransactionRecord(e, 'VRTPOCKET_BUSINESS_EXPENSES_DATABASE', 'business-expense-form', 'business-expense-modal');
     document.getElementById('investment-form').onsubmit = (e) => saveTransactionRecord(e, 'VRTPOCKET_INVESTMENT_FINANCE_DATABASE', 'investment-form', 'investment-modal');
     document.getElementById('investment-expense-form').onsubmit = (e) => saveInvestmentFeeRecord(e);
+
+    // Autofill Trigger click handlers
+    document.getElementById('btn-fetch-personal-income').onclick = () => openAutofill('personal-income');
+    document.getElementById('btn-fetch-personal-expense').onclick = () => openAutofill('personal-expense');
+    document.getElementById('btn-fetch-business-income').onclick = () => openAutofill('business-income');
+    document.getElementById('btn-fetch-business-expense').onclick = () => openAutofill('business-expense');
+
+    document.getElementById('close-autofill-modal').onclick = () => closeModal('autofill-modal');
+    document.getElementById('btn-autofill-back-to-frequency').onclick = () => {
+        document.getElementById('autofill-frequency-selector').classList.remove('hidden');
+        document.getElementById('autofill-list-wrapper').classList.add('hidden');
+    };
+
+    document.getElementById('btn-autofill-monthly').onclick = () => showAutofillTemplates('monthly');
+    document.getElementById('btn-autofill-yearly').onclick = () => showAutofillTemplates('yearly');
+
+    // Subscription controls event listeners
+    document.getElementById('personal-expense-is-subscription').onchange = (e) => {
+        const wrapper = document.getElementById('personal-expense-subscription-sub-settings');
+        if (e.target.checked) {
+            wrapper.classList.remove('hidden');
+            document.getElementById('personal-expense-sub-status').value = 'subscribe';
+            updateSubscriptionStatusUI('personal-expense');
+        } else {
+            wrapper.classList.add('hidden');
+        }
+    };
+    document.getElementById('business-expense-is-subscription').onchange = (e) => {
+        const wrapper = document.getElementById('business-expense-subscription-sub-settings');
+        if (e.target.checked) {
+            wrapper.classList.remove('hidden');
+            document.getElementById('business-expense-sub-status').value = 'subscribe';
+            updateSubscriptionStatusUI('business-expense');
+        } else {
+            wrapper.classList.add('hidden');
+        }
+    };
+    document.getElementById('personal-expense-sub-status').onchange = () => {
+        updateSubscriptionStatusUI('personal-expense');
+    };
+    document.getElementById('business-expense-sub-status').onchange = () => {
+        updateSubscriptionStatusUI('business-expense');
+    };
 
     // Profile Settings Form
     document.getElementById('profile-form').onsubmit = async (e) => {
@@ -596,7 +769,10 @@ function formatVal(amount) {
 }
 
 // Helper to calculate subscription due dates relative to today
-function calculateNextRenewal(startDateStr, frequency) {
+function calculateNextRenewal(startDateStr, frequency, unsubscribeDateStr) {
+    if (unsubscribeDateStr) {
+        return new Date(unsubscribeDateStr);
+    }
     const start = new Date(startDateStr);
     const today = new Date();
     today.setHours(0,0,0,0);
@@ -701,22 +877,53 @@ function syncProfileFields() {
 
 // ==================== RENDER: DASHBOARD ANALYTICS ====================
 function renderDashboardStats() {
-    // Calculators
-    const pIncSum = appData.personalIncome.reduce((acc, row) => acc + (row.amount || 0), 0);
-    const pExpSum = appData.personalExpenses.reduce((acc, row) => acc + (row.amount || 0), 0);
-    
-    const bIncSum = appData.businessIncome.reduce((acc, row) => acc + (row.amount || 0), 0);
-    const bExpSum = appData.businessExpenses.reduce((acc, row) => acc + (row.amount || 0), 0);
+    // Resolve date filter boundaries
+    let startD = new Date(0);
+    let endD = new Date(9999, 11, 31);
+    if (dashboardDateFilterType === 'month' && dashboardDateMonth) {
+        const [year, month] = dashboardDateMonth.split('-');
+        const y = parseInt(year, 10);
+        const m = parseInt(month, 10) - 1;
+        startD = new Date(y, m, 1);
+        endD = new Date(y, m + 1, 0, 23, 59, 59, 999);
+    } else if (dashboardDateFilterType === 'custom') {
+        if (dashboardDateFrom) {
+            startD = new Date(dashboardDateFrom);
+            startD.setHours(0, 0, 0, 0);
+        }
+        if (dashboardDateTo) {
+            endD = new Date(dashboardDateTo);
+            endD.setHours(23, 59, 59, 999);
+        }
+    }
 
-    const invAssetsCapital = appData.investments.reduce((acc, row) => acc + (row.initial_amount || 0), 0);
-    const invAssetsCurrent = appData.investments.reduce((acc, row) => acc + (row.current_val || 0), 0);
-    const invFeesSum = appData.investmentExpenses.reduce((acc, row) => acc + (row.amount || 0), 0);
+    const personalIncomeFiltered = appData.personalIncome.filter(r => isDateInFilter(r.date));
+    const personalExpensesFiltered = getExpandedExpenses(appData.personalExpenses, startD, endD);
     
-    const outstandingInvoices = appData.invoices
+    const businessIncomeFiltered = appData.businessIncome.filter(r => isDateInFilter(r.date));
+    const businessExpensesFiltered = getExpandedExpenses(appData.businessExpenses, startD, endD);
+
+    const investmentsFiltered = appData.investments.filter(r => isDateInFilter(r.purchase_date));
+    const investmentExpensesFiltered = appData.investmentExpenses.filter(r => isDateInFilter(r.date));
+    
+    const invoicesFiltered = appData.invoices.filter(r => isDateInFilter(r.issue_date));
+
+    // Calculators
+    const pIncSum = personalIncomeFiltered.reduce((acc, row) => acc + (row.amount || 0), 0);
+    const pExpSum = personalExpensesFiltered.reduce((acc, row) => acc + (row.amount || 0), 0);
+    
+    const bIncSum = businessIncomeFiltered.reduce((acc, row) => acc + (row.amount || 0), 0);
+    const bExpSum = businessExpensesFiltered.reduce((acc, row) => acc + (row.amount || 0), 0);
+
+    const invAssetsCapital = investmentsFiltered.reduce((acc, row) => acc + (row.initial_amount || 0), 0);
+    const invAssetsCurrent = investmentsFiltered.reduce((acc, row) => acc + (row.current_val || 0), 0);
+    const invFeesSum = investmentExpensesFiltered.reduce((acc, row) => acc + (row.amount || 0), 0);
+    
+    const outstandingInvoices = invoicesFiltered
         .filter(i => i.status !== 'Paid' && i.status !== 'Draft')
         .reduce((acc, i) => acc + (i.total_amount || 0), 0);
-    const paidInvoicesCount = appData.invoices.filter(i => i.status === 'Paid').length;
-    const pendingInvoicesCount = appData.invoices.filter(i => i.status === 'Sent' || i.status === 'Overdue').length;
+    const paidInvoicesCount = invoicesFiltered.filter(i => i.status === 'Paid').length;
+    const pendingInvoicesCount = invoicesFiltered.filter(i => i.status === 'Sent' || i.status === 'Overdue').length;
 
     // Fill UI Values
     document.getElementById('stat-personal-net').textContent = formatVal(pIncSum - pExpSum);
@@ -806,8 +1013,20 @@ function renderDashboardStats() {
         subPool = appData.businessExpenses.filter(e => e.is_subscription);
     }
 
+    // Filter subscription list by date filter too, and exclude if unsubscribed in the past
+    subPool = subPool.filter(sub => {
+        if (!isDateInFilter(sub.date)) return false;
+        if (sub.unsubscribe_date) {
+            const unsub = new Date(sub.unsubscribe_date);
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            if (unsub < today) return false; // Exclude if already unsubscribed
+        }
+        return true;
+    });
+
     const subscriptions = subPool.map(sub => {
-        const nextDue = calculateNextRenewal(sub.date, sub.frequency);
+        const nextDue = calculateNextRenewal(sub.date, sub.frequency, sub.unsubscribe_date);
         return { ...sub, nextDue };
     }).sort((a, b) => a.nextDue - b.nextDue);
 
@@ -817,7 +1036,7 @@ function renderDashboardStats() {
     if (subscriptions.length === 0) {
         subContainer.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No active subscriptions detected.</td></tr>`;
     } else {
-        subscriptions.slice(0, 5).forEach(sub => {
+        subscriptions.forEach(sub => {
             subContainer.innerHTML += `
                 <tr>
                     <td><strong>${sub.title}</strong></td>
@@ -831,7 +1050,8 @@ function renderDashboardStats() {
     }
 
     // Load Portfolio List into Dashboard
-    const topInvs = [...appData.investments].sort((a, b) => (b.current_val - b.initial_amount) - (a.current_val - a.initial_amount));
+    const filteredInvestments = appData.investments.filter(r => isDateInFilter(r.purchase_date));
+    const topInvs = [...filteredInvestments].sort((a, b) => (b.current_val - b.initial_amount) - (a.current_val - a.initial_amount));
     const invContainer = document.getElementById('dashboard-investments-list');
     invContainer.innerHTML = '';
     
@@ -881,9 +1101,11 @@ function renderDashboardCharts() {
         expenseWrapper.classList.remove('hidden');
         expenseChartTitle.textContent = 'Investment Asset Allocation by Type';
         
+        const investmentsFiltered = appData.investments.filter(r => isDateInFilter(r.purchase_date));
+        
         // Accumulate investments asset types
         const types = {};
-        appData.investments.forEach(asset => {
+        investmentsFiltered.forEach(asset => {
             const t = asset.type || 'Other';
             types[t] = (types[t] || 0) + (asset.current_val || 0);
         });
@@ -923,43 +1145,242 @@ function renderDashboardCharts() {
     expenseWrapper.classList.remove('hidden');
     expenseChartTitle.textContent = 'Expense Breakdown by Categories';
 
-    // 1. CASHFLOW CHART: Calculate past 6 months income vs expenses
-    const months = [];
-    const incomes = [];
-    const expenses = [];
-    const date = new Date();
-    
-    for (let i = 5; i >= 0; i--) {
-        const d = new Date(date.getFullYear(), date.getMonth() - i, 1);
-        months.push(d.toLocaleString('default', { month: 'short', year: '2-digit' }));
-        
-        // Filter income / expenses matching this month & year
-        const matchMonthYear = (recordDateStr) => {
-            const rd = new Date(recordDateStr);
-            return rd.getMonth() === d.getMonth() && rd.getFullYear() === d.getFullYear();
+    // 1. CASHFLOW CHART: Calculate Dynamic Groupings based on Date Filter
+    let months = [];
+    let incomes = [];
+    let expenses = [];
+
+    // Resolve date filter boundaries
+    let startD = new Date(0);
+    let endD = new Date(9999, 11, 31);
+    if (dashboardDateFilterType === 'month' && dashboardDateMonth) {
+        const [year, month] = dashboardDateMonth.split('-');
+        const y = parseInt(year, 10);
+        const m = parseInt(month, 10) - 1;
+        startD = new Date(y, m, 1);
+        endD = new Date(y, m + 1, 0, 23, 59, 59, 999);
+    } else if (dashboardDateFilterType === 'custom') {
+        if (dashboardDateFrom) {
+            startD = new Date(dashboardDateFrom);
+            startD.setHours(0, 0, 0, 0);
+        }
+        if (dashboardDateTo) {
+            endD = new Date(dashboardDateTo);
+            endD.setHours(23, 59, 59, 999);
+        }
+    }
+
+    if (dashboardDateFilterType === 'all') {
+        const date = new Date();
+        for (let i = 11; i >= 0; i--) {
+            const d = new Date(date.getFullYear(), date.getMonth() - i, 1);
+            months.push(d.toLocaleString('default', { month: 'short', year: '2-digit' }));
+            
+            const startOfMonth = new Date(d.getFullYear(), d.getMonth(), 1);
+            const endOfMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999);
+
+            const matchMonthYear = (recordDateStr) => {
+                const rd = new Date(recordDateStr);
+                return rd.getMonth() === d.getMonth() && rd.getFullYear() === d.getFullYear();
+            };
+
+            let mIncome = 0;
+            let mExpense = 0;
+
+            if (currentDashboardSegment === 'all') {
+                const mPersonalIncome = appData.personalIncome.filter(r => matchMonthYear(r.date)).reduce((acc, r) => acc + (r.amount || 0), 0);
+                const mBusinessIncome = appData.businessIncome.filter(r => matchMonthYear(r.date)).reduce((acc, r) => acc + (r.amount || 0), 0);
+                mIncome = mPersonalIncome + mBusinessIncome;
+
+                const mPersonalExpense = getExpandedExpenses(appData.personalExpenses, startOfMonth, endOfMonth).reduce((acc, r) => acc + (r.amount || 0), 0);
+                const mBusinessExpense = getExpandedExpenses(appData.businessExpenses, startOfMonth, endOfMonth).reduce((acc, r) => acc + (r.amount || 0), 0);
+                mExpense = mPersonalExpense + mBusinessExpense;
+            } else if (currentDashboardSegment === 'personal') {
+                mIncome = appData.personalIncome.filter(r => matchMonthYear(r.date)).reduce((acc, r) => acc + (r.amount || 0), 0);
+                mExpense = getExpandedExpenses(appData.personalExpenses, startOfMonth, endOfMonth).reduce((acc, r) => acc + (r.amount || 0), 0);
+            } else if (currentDashboardSegment === 'business') {
+                mIncome = appData.businessIncome.filter(r => matchMonthYear(r.date)).reduce((acc, r) => acc + (r.amount || 0), 0);
+                mExpense = getExpandedExpenses(appData.businessExpenses, startOfMonth, endOfMonth).reduce((acc, r) => acc + (r.amount || 0), 0);
+            }
+
+            incomes.push(mIncome);
+            expenses.push(mExpense);
+        }
+    } else if (dashboardDateFilterType === 'month') {
+        const [year, month] = (dashboardDateMonth || new Date().toISOString().slice(0, 7)).split('-');
+        const filterYear = parseInt(year, 10);
+        const filterMonth = parseInt(month, 10) - 1;
+
+        months = ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5'];
+        incomes = [0, 0, 0, 0, 0];
+        expenses = [0, 0, 0, 0, 0];
+
+        const startOfMonth = new Date(filterYear, filterMonth, 1);
+        const endOfMonth = new Date(filterYear, filterMonth + 1, 0, 23, 59, 59, 999);
+
+        const getWeekIndex = (dateStr) => {
+            const d = new Date(dateStr);
+            const day = d.getDate();
+            if (day <= 7) return 0;
+            if (day <= 14) return 1;
+            if (day <= 21) return 2;
+            if (day <= 28) return 3;
+            return 4;
         };
 
-        let mIncome = 0;
-        let mExpense = 0;
+        const matchMonthYear = (recordDateStr) => {
+            const rd = new Date(recordDateStr);
+            return rd.getMonth() === filterMonth && rd.getFullYear() === filterYear;
+        };
+
+        const processPool = (incomePool, rawExpensePool) => {
+            incomePool.filter(r => matchMonthYear(r.date)).forEach(r => {
+                const w = getWeekIndex(r.date);
+                incomes[w] += (r.amount || 0);
+            });
+            const expPool = getExpandedExpenses(rawExpensePool, startOfMonth, endOfMonth);
+            expPool.forEach(r => {
+                const w = getWeekIndex(r.date);
+                expenses[w] += (r.amount || 0);
+            });
+        };
 
         if (currentDashboardSegment === 'all') {
-            const mPersonalIncome = appData.personalIncome.filter(r => matchMonthYear(r.date)).reduce((acc, r) => acc + (r.amount || 0), 0);
-            const mBusinessIncome = appData.businessIncome.filter(r => matchMonthYear(r.date)).reduce((acc, r) => acc + (r.amount || 0), 0);
-            mIncome = mPersonalIncome + mBusinessIncome;
-
-            const mPersonalExpense = appData.personalExpenses.filter(r => matchMonthYear(r.date)).reduce((acc, r) => acc + (r.amount || 0), 0);
-            const mBusinessExpense = appData.businessExpenses.filter(r => matchMonthYear(r.date)).reduce((acc, r) => acc + (r.amount || 0), 0);
-            mExpense = mPersonalExpense + mBusinessExpense;
+            processPool(appData.personalIncome, appData.personalExpenses);
+            processPool(appData.businessIncome, appData.businessExpenses);
         } else if (currentDashboardSegment === 'personal') {
-            mIncome = appData.personalIncome.filter(r => matchMonthYear(r.date)).reduce((acc, r) => acc + (r.amount || 0), 0);
-            mExpense = appData.personalExpenses.filter(r => matchMonthYear(r.date)).reduce((acc, r) => acc + (r.amount || 0), 0);
+            processPool(appData.personalIncome, appData.personalExpenses);
         } else if (currentDashboardSegment === 'business') {
-            mIncome = appData.businessIncome.filter(r => matchMonthYear(r.date)).reduce((acc, r) => acc + (r.amount || 0), 0);
-            mExpense = appData.businessExpenses.filter(r => matchMonthYear(r.date)).reduce((acc, r) => acc + (r.amount || 0), 0);
+            processPool(appData.businessIncome, appData.businessExpenses);
         }
+    } else if (dashboardDateFilterType === 'custom') {
+        const start = dashboardDateFrom ? new Date(dashboardDateFrom) : new Date(new Date().setDate(new Date().getDate() - 30));
+        const end = dashboardDateTo ? new Date(dashboardDateTo) : new Date();
+        
+        const startDate = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+        const endDate = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+        const diffDays = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
 
-        incomes.push(mIncome);
-        expenses.push(mExpense);
+        if (diffDays <= 31) {
+            for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+                const label = d.toLocaleDateString('default', { month: 'short', day: 'numeric' });
+                months.push(label);
+                
+                const matchDay = (recordDateStr) => {
+                    const rd = new Date(recordDateStr);
+                    return rd.getDate() === d.getDate() && rd.getMonth() === d.getMonth() && rd.getFullYear() === d.getFullYear();
+                };
+
+                let dayIncome = 0;
+                let dayExpense = 0;
+
+                const startOfDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+                const endOfDay = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
+
+                const calcDay = (inc, expPool) => {
+                    dayIncome += inc.filter(r => matchDay(r.date)).reduce((acc, r) => acc + (r.amount || 0), 0);
+                    dayExpense += getExpandedExpenses(expPool, startOfDay, endOfDay).reduce((acc, r) => acc + (r.amount || 0), 0);
+                };
+
+                if (currentDashboardSegment === 'all') {
+                    calcDay(appData.personalIncome, appData.personalExpenses);
+                    calcDay(appData.businessIncome, appData.businessExpenses);
+                } else if (currentDashboardSegment === 'personal') {
+                    calcDay(appData.personalIncome, appData.personalExpenses);
+                } else if (currentDashboardSegment === 'business') {
+                    calcDay(appData.businessIncome, appData.businessExpenses);
+                }
+
+                incomes.push(dayIncome);
+                expenses.push(dayExpense);
+            }
+        } else if (diffDays <= 366) {
+            let current = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+            const limit = new Date(endDate.getFullYear(), endDate.getMonth(), 1);
+            
+            while (current <= limit) {
+                const label = current.toLocaleString('default', { month: 'short', year: '2-digit' });
+                months.push(label);
+                
+                const targetMonth = current.getMonth();
+                const targetYear = current.getFullYear();
+                
+                const startOfMonthRange = new Date(current.getFullYear(), current.getMonth(), 1);
+                const startBound = startOfMonthRange < startDate ? startDate : startOfMonthRange;
+                const endOfMonthRange = new Date(current.getFullYear(), current.getMonth() + 1, 0, 23, 59, 59, 999);
+                const endBound = endOfMonthRange > endDate ? endDate : endOfMonthRange;
+
+                const matchMonthYear = (recordDateStr) => {
+                    const rd = new Date(recordDateStr);
+                    if (rd < startDate || rd > endDate) return false;
+                    return rd.getMonth() === targetMonth && rd.getFullYear() === targetYear;
+                };
+
+                let mIncome = 0;
+                let mExpense = 0;
+
+                const calcMonth = (inc, expPool) => {
+                    mIncome += inc.filter(r => matchMonthYear(r.date)).reduce((acc, r) => acc + (r.amount || 0), 0);
+                    mExpense += getExpandedExpenses(expPool, startBound, endBound).reduce((acc, r) => acc + (r.amount || 0), 0);
+                };
+
+                if (currentDashboardSegment === 'all') {
+                    calcMonth(appData.personalIncome, appData.personalExpenses);
+                    calcMonth(appData.businessIncome, appData.businessExpenses);
+                } else if (currentDashboardSegment === 'personal') {
+                    calcMonth(appData.personalIncome, appData.personalExpenses);
+                } else if (currentDashboardSegment === 'business') {
+                    calcMonth(appData.businessIncome, appData.businessExpenses);
+                }
+
+                incomes.push(mIncome);
+                expenses.push(mExpense);
+
+                current.setMonth(current.getMonth() + 1);
+            }
+        } else {
+            let currentYear = startDate.getFullYear();
+            const limitYear = endDate.getFullYear();
+            
+            while (currentYear <= limitYear) {
+                months.push(String(currentYear));
+                
+                const targetYear = currentYear;
+                
+                const startOfYearRange = new Date(currentYear, 0, 1);
+                const startBound = startOfYearRange < startDate ? startDate : startOfYearRange;
+                const endOfYearRange = new Date(currentYear, 11, 31, 23, 59, 59, 999);
+                const endBound = endOfYearRange > endDate ? endDate : endOfYearRange;
+
+                const matchYear = (recordDateStr) => {
+                    const rd = new Date(recordDateStr);
+                    if (rd < startDate || rd > endDate) return false;
+                    return rd.getFullYear() === targetYear;
+                };
+
+                let yIncome = 0;
+                let yExpense = 0;
+
+                const calcYear = (inc, expPool) => {
+                    yIncome += inc.filter(r => matchYear(r.date)).reduce((acc, r) => acc + (r.amount || 0), 0);
+                    yExpense += getExpandedExpenses(expPool, startBound, endBound).reduce((acc, r) => acc + (r.amount || 0), 0);
+                };
+
+                if (currentDashboardSegment === 'all') {
+                    calcYear(appData.personalIncome, appData.personalExpenses);
+                    calcYear(appData.businessIncome, appData.businessExpenses);
+                } else if (currentDashboardSegment === 'personal') {
+                    calcYear(appData.personalIncome, appData.personalExpenses);
+                } else if (currentDashboardSegment === 'business') {
+                    calcYear(appData.businessIncome, appData.businessExpenses);
+                }
+
+                incomes.push(yIncome);
+                expenses.push(yExpense);
+
+                currentYear++;
+            }
+        }
     }
 
     charts.cashflow = new Chart(ctxCashflow, {
@@ -996,16 +1417,19 @@ function renderDashboardCharts() {
 
     // 2. EXPENSE DISTRIBUTION CHART: Category breakdown
     const categories = {};
-    let expPool = [];
+    let expPoolFiltered = [];
     if (currentDashboardSegment === 'all') {
-        expPool = [...appData.personalExpenses, ...appData.businessExpenses];
+        expPoolFiltered = [
+            ...getExpandedExpenses(appData.personalExpenses, startD, endD),
+            ...getExpandedExpenses(appData.businessExpenses, startD, endD)
+        ];
     } else if (currentDashboardSegment === 'personal') {
-        expPool = appData.personalExpenses;
+        expPoolFiltered = getExpandedExpenses(appData.personalExpenses, startD, endD);
     } else if (currentDashboardSegment === 'business') {
-        expPool = appData.businessExpenses;
+        expPoolFiltered = getExpandedExpenses(appData.businessExpenses, startD, endD);
     }
 
-    expPool.forEach(exp => {
+    expPoolFiltered.forEach(exp => {
         const cat = exp.category || 'Other';
         categories[cat] = (categories[cat] || 0) + (exp.amount || 0);
     });
@@ -1076,7 +1500,7 @@ function renderPersonalFinance() {
     } else {
         appData.personalExpenses.forEach(row => {
             const nextDueStr = row.is_subscription 
-                ? formatDateToDMY(calculateNextRenewal(row.date, row.frequency)) 
+                ? formatDateToDMY(calculateNextRenewal(row.date, row.frequency, row.unsubscribe_date)) 
                 : 'N/A';
             
             expenseBody.innerHTML += `
@@ -1136,7 +1560,7 @@ function renderBusinessFinance() {
     } else {
         appData.businessExpenses.forEach(row => {
             const nextDueStr = row.is_subscription 
-                ? formatDateToDMY(calculateNextRenewal(row.date, row.frequency)) 
+                ? formatDateToDMY(calculateNextRenewal(row.date, row.frequency, row.unsubscribe_date)) 
                 : 'N/A';
             
             expenseBody.innerHTML += `
@@ -1293,9 +1717,23 @@ async function saveTransactionRecord(e, collectionName, formId, modalId) {
         data.is_subscription = form.querySelector('[id$="-is-subscription"]').checked;
         data.notes = form.querySelector('[id$="-notes"]').value;
         
-        // Pre-calculate next due date
+        // Subscription status fields
         if (data.is_subscription) {
-            data.next_due_date = calculateNextRenewal(data.date, data.frequency).toISOString();
+            const prefix = formId.startsWith('personal') ? 'personal-expense' : 'business-expense';
+            const subStatus = document.getElementById(`${prefix}-sub-status`).value;
+            const unsubDateVal = document.getElementById(`${prefix}-unsubscribe-date`).value;
+            
+            data.sub_status = subStatus;
+            if (subStatus === 'unsubscribe' && unsubDateVal) {
+                data.unsubscribe_date = new Date(unsubDateVal).toISOString();
+            } else {
+                data.unsubscribe_date = '';
+            }
+            
+            data.next_due_date = calculateNextRenewal(data.date, data.frequency, data.unsubscribe_date).toISOString();
+        } else {
+            data.sub_status = '';
+            data.unsubscribe_date = '';
         }
     } else if (formId.includes('investment')) {
         data.name = document.getElementById('investment-name').value;
@@ -1382,10 +1820,22 @@ async function editTransactionRecord(id, collectionName) {
             document.getElementById('personal-expense-title').value = record.title || '';
             document.getElementById('personal-expense-amount').value = record.amount || 0;
             document.getElementById('personal-expense-frequency').value = record.frequency || 'one-time';
-            document.getElementById('personal-expense-date').value = record.date.split(' ')[0];
+            document.getElementById('personal-expense-date').value = record.date.split(/[ T]/)[0];
             document.getElementById('personal-expense-category').value = record.category || 'Housing';
             document.getElementById('personal-expense-is-subscription').checked = record.is_subscription || false;
             document.getElementById('personal-expense-notes').value = record.notes || '';
+            
+            const isSub = record.is_subscription || false;
+            const subSettings = document.getElementById('personal-expense-subscription-sub-settings');
+            if (isSub) {
+                subSettings.classList.remove('hidden');
+                document.getElementById('personal-expense-sub-status').value = record.sub_status || 'subscribe';
+                document.getElementById('personal-expense-unsubscribe-date').value = record.unsubscribe_date ? record.unsubscribe_date.split(/[ T]/)[0] : '';
+                updateSubscriptionStatusUI('personal-expense');
+            } else {
+                subSettings.classList.add('hidden');
+            }
+            
             document.getElementById('personal-expense-modal-title').textContent = 'Modify Personal Expense';
             openModal('personal-expense-modal');
         } else if (collectionName === 'VRTPOCKET_BUSINESS_FINANCE_DATABASE') {
@@ -1403,10 +1853,22 @@ async function editTransactionRecord(id, collectionName) {
             document.getElementById('business-expense-title').value = record.title || '';
             document.getElementById('business-expense-amount').value = record.amount || 0;
             document.getElementById('business-expense-frequency').value = record.frequency || 'one-time';
-            document.getElementById('business-expense-date').value = record.date.split(' ')[0];
+            document.getElementById('business-expense-date').value = record.date.split(/[ T]/)[0];
             document.getElementById('business-expense-category').value = record.category || 'Software/SaaS';
             document.getElementById('business-expense-is-subscription').checked = record.is_subscription || false;
             document.getElementById('business-expense-notes').value = record.notes || '';
+            
+            const isSub = record.is_subscription || false;
+            const subSettings = document.getElementById('business-expense-subscription-sub-settings');
+            if (isSub) {
+                subSettings.classList.remove('hidden');
+                document.getElementById('business-expense-sub-status').value = record.sub_status || 'subscribe';
+                document.getElementById('business-expense-unsubscribe-date').value = record.unsubscribe_date ? record.unsubscribe_date.split(/[ T]/)[0] : '';
+                updateSubscriptionStatusUI('business-expense');
+            } else {
+                subSettings.classList.add('hidden');
+            }
+            
             document.getElementById('business-expense-modal-title').textContent = 'Modify Business Expense';
             openModal('business-expense-modal');
         } else if (collectionName === 'VRTPOCKET_INVESTMENT_FINANCE_DATABASE') {
@@ -1816,15 +2278,17 @@ function compileReport(e) {
     const scope = document.getElementById('report-segment').value;
 
     const start = startDateVal ? new Date(startDateVal) : new Date(0); // far past
-    const end = endDateVal ? new Date(endDateVal) : new Date();
-    end.setHours(23,59,59,999); // boundary
+    const end = endDateVal ? new Date(endDateVal) : new Date(9999, 11, 31); // far future if empty
+    if (endDateVal) {
+        end.setHours(23, 59, 59, 999); // boundary
+    }
 
     // Meta report headers
     document.getElementById('report-company-name').textContent = currentUser.company_name || 'My Organization';
     document.getElementById('report-gen-date').textContent = formatDateToDMY(new Date());
     const startText = startDateVal ? formatDateToDMY(startDateVal) : 'All Time';
-    const endText = endDateVal ? formatDateToDMY(endDateVal) : 'Today';
-    document.getElementById('report-period-text').textContent = `${startText} to ${endText}`;
+    const endText = endDateVal ? formatDateToDMY(endDateVal) : 'All Time';
+    document.getElementById('report-period-text').textContent = (startDateVal || endDateVal) ? `${startText} to ${endText}` : 'All Time';
     
     const logoPrint = document.getElementById('report-company-logo');
     if (currentUser.company_logo) {
@@ -1836,15 +2300,16 @@ function compileReport(e) {
 
     // Combine data lists based on selected scope
     let incomePool = [];
-    let expensePool = [];
+    let personalExp = [];
+    let businessExp = [];
     
     if (scope === 'all' || scope === 'personal') {
         incomePool = [...incomePool, ...appData.personalIncome.map(r => ({ ...r, origin: 'Personal' }))];
-        expensePool = [...expensePool, ...appData.personalExpenses.map(r => ({ ...r, origin: 'Personal' }))];
+        personalExp = getExpandedExpenses(appData.personalExpenses, start, end).map(r => ({ ...r, origin: 'Personal' }));
     }
     if (scope === 'all' || scope === 'business') {
         incomePool = [...incomePool, ...appData.businessIncome.map(r => ({ ...r, origin: 'Business' }))];
-        expensePool = [...expensePool, ...appData.businessExpenses.map(r => ({ ...r, origin: 'Business' }))];
+        businessExp = getExpandedExpenses(appData.businessExpenses, start, end).map(r => ({ ...r, origin: 'Business' }));
     }
 
     // Date filters apply
@@ -1853,10 +2318,7 @@ function compileReport(e) {
         return d >= start && d <= end;
     });
 
-    const filteredExpenses = expensePool.filter(r => {
-        const d = new Date(r.date);
-        return d >= start && d <= end;
-    });
+    const filteredExpenses = [...personalExp, ...businessExp];
 
     const totalInflow = filteredIncome.reduce((acc, r) => acc + (r.amount || 0), 0);
     const totalOutflow = filteredExpenses.reduce((acc, r) => acc + (r.amount || 0), 0);
@@ -1905,11 +2367,13 @@ function compileReport(e) {
     } else {
         catList.forEach(c => {
             const classColor = c.classification === 'Inflow' ? 'text-emerald' : 'text-rose';
+            const originBadgeClass = c.origin === 'Personal' ? 'personal-badge' : 'business-badge';
+            const typeBadgeClass = c.classification === 'Inflow' ? 'inflow' : 'outflow';
             distBody.innerHTML += `
                 <tr>
                     <td><strong>${c.name}</strong></td>
-                    <td>${c.origin} Operations</td>
-                    <td><span class="badge ${c.classification === 'Inflow' ? 'one-time' : 'yearly'}">${c.classification}</span></td>
+                    <td><span class="badge ${originBadgeClass}">${c.origin} Operations</span></td>
+                    <td><span class="badge ${typeBadgeClass}">${c.classification}</span></td>
                     <td class="text-right ${classColor} font-bold">${c.classification === 'Inflow' ? '+' : '-'}${formatVal(c.sum)}</td>
                 </tr>
             `;
@@ -1930,10 +2394,17 @@ function compileReport(e) {
     } else {
         combinedTx.slice(0, 20).forEach(t => {
             const classColor = t.class === 'Inflow' ? 'text-emerald' : 'text-rose';
+            const originBadgeClass = t.origin === 'Personal' ? 'personal-badge' : 'business-badge';
+            const typeBadgeClass = t.class === 'Inflow' ? 'inflow' : 'outflow';
             txBody.innerHTML += `
                 <tr>
                     <td>${formatDateToDMY(t.date)}</td>
-                    <td>${t.origin} ${t.class}</td>
+                    <td>
+                        <div class="flex-align-center" style="gap: 0.35rem; display: inline-flex; align-items: center;">
+                            <span class="badge ${originBadgeClass}">${t.origin}</span>
+                            <span class="badge ${typeBadgeClass}">${t.class}</span>
+                        </div>
+                    </td>
                     <td class="report-title-cell"><strong>${t.title || t.name}</strong> <span class="text-muted text-sm">(${t.category})</span></td>
                     <td><span class="badge ${t.frequency}">${t.frequency}</span></td>
                     <td class="text-right ${classColor} font-bold">${t.class === 'Inflow' ? '+' : '-'}${formatVal(t.amount)}</td>
@@ -1941,4 +2412,218 @@ function compileReport(e) {
             `;
         });
     }
+}
+
+// ==================== TRANSACTION TEMPLATE AUTOFILL ENGINE ====================
+function openAutofill(context) {
+    currentAutofillContext = context;
+    document.getElementById('autofill-frequency-selector').classList.remove('hidden');
+    document.getElementById('autofill-list-wrapper').classList.add('hidden');
+    openModal('autofill-modal');
+}
+
+function showAutofillTemplates(frequency) {
+    let sourceData = [];
+    let isExpense = false;
+    
+    if (currentAutofillContext === 'personal-income') {
+        sourceData = appData.personalIncome;
+    } else if (currentAutofillContext === 'personal-expense') {
+        sourceData = appData.personalExpenses;
+        isExpense = true;
+    } else if (currentAutofillContext === 'business-income') {
+        sourceData = appData.businessIncome;
+    } else if (currentAutofillContext === 'business-expense') {
+        sourceData = appData.businessExpenses;
+        isExpense = true;
+    }
+
+    // Filter by frequency matching selection (monthly or yearly)
+    const filtered = sourceData.filter(item => (item.frequency || '').toLowerCase() === frequency.toLowerCase());
+
+    // De-duplicate items based on guidelines
+    const seen = new Set();
+    const uniqueTemplates = [];
+
+    filtered.forEach(item => {
+        let key = '';
+        if (isExpense) {
+            // Expense guidelines: title, amount, frequency, category, is_subscription flag
+            key = `${(item.title || '').trim().toLowerCase()}_${item.amount}_${(item.frequency || '').toLowerCase()}_${(item.category || '').trim().toLowerCase()}_${!!item.is_subscription}`;
+        } else {
+            // Income guidelines: title, amount, frequency, category
+            key = `${(item.title || '').trim().toLowerCase()}_${item.amount}_${(item.frequency || '').toLowerCase()}_${(item.category || '').trim().toLowerCase()}`;
+        }
+        if (!seen.has(key)) {
+            seen.add(key);
+            uniqueTemplates.push(item);
+        }
+    });
+
+    const tbody = document.getElementById('autofill-list-body');
+    tbody.innerHTML = '';
+
+    if (uniqueTemplates.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted">No previous ${frequency} templates found.</td></tr>`;
+    } else {
+        uniqueTemplates.forEach((item) => {
+            const escapedJson = encodeURIComponent(JSON.stringify(item));
+            tbody.innerHTML += `
+                <tr>
+                    <td><strong>${item.title || 'Untitled'}</strong></td>
+                    <td>${item.category || 'N/A'}</td>
+                    <td>${formatVal(item.amount)}</td>
+                    <td class="text-right">
+                        <button type="button" class="btn btn-xs btn-primary" onclick="selectAutofillTemplate('${escapedJson}')">Select</button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    document.getElementById('autofill-frequency-selector').classList.add('hidden');
+    document.getElementById('autofill-list-wrapper').classList.remove('hidden');
+}
+
+function selectAutofillTemplate(escapedJson) {
+    const item = JSON.parse(decodeURIComponent(escapedJson));
+    
+    if (currentAutofillContext === 'personal-income') {
+        document.getElementById('personal-income-title').value = item.title || '';
+        document.getElementById('personal-income-amount').value = item.amount || 0;
+        document.getElementById('personal-income-frequency').value = item.frequency || 'one-time';
+        document.getElementById('personal-income-category').value = item.category || 'Other';
+        // Only keep date and notes fields empty
+        document.getElementById('personal-income-date').value = '';
+        document.getElementById('personal-income-notes').value = '';
+    } else if (currentAutofillContext === 'personal-expense') {
+        document.getElementById('personal-expense-title').value = item.title || '';
+        document.getElementById('personal-expense-amount').value = item.amount || 0;
+        document.getElementById('personal-expense-frequency').value = item.frequency || 'one-time';
+        document.getElementById('personal-expense-category').value = item.category || 'Other';
+        
+        const isSub = !!item.is_subscription;
+        document.getElementById('personal-expense-is-subscription').checked = isSub;
+        const subSettings = document.getElementById('personal-expense-subscription-sub-settings');
+        if (isSub) {
+            subSettings.classList.remove('hidden');
+            document.getElementById('personal-expense-sub-status').value = 'subscribe';
+            updateSubscriptionStatusUI('personal-expense');
+        } else {
+            subSettings.classList.add('hidden');
+        }
+        // Only keep date and notes fields empty
+        document.getElementById('personal-expense-date').value = '';
+        document.getElementById('personal-expense-notes').value = '';
+    } else if (currentAutofillContext === 'business-income') {
+        document.getElementById('business-income-title').value = item.title || '';
+        document.getElementById('business-income-amount').value = item.amount || 0;
+        document.getElementById('business-income-frequency').value = item.frequency || 'one-time';
+        document.getElementById('business-income-category').value = item.category || 'Other';
+        // Only keep date and notes fields empty
+        document.getElementById('business-income-date').value = '';
+        document.getElementById('business-income-notes').value = '';
+    } else if (currentAutofillContext === 'business-expense') {
+        document.getElementById('business-expense-title').value = item.title || '';
+        document.getElementById('business-expense-amount').value = item.amount || 0;
+        document.getElementById('business-expense-frequency').value = item.frequency || 'one-time';
+        document.getElementById('business-expense-category').value = item.category || 'Other';
+        
+        const isSub = !!item.is_subscription;
+        document.getElementById('business-expense-is-subscription').checked = isSub;
+        const subSettings = document.getElementById('business-expense-subscription-sub-settings');
+        if (isSub) {
+            subSettings.classList.remove('hidden');
+            document.getElementById('business-expense-sub-status').value = 'subscribe';
+            updateSubscriptionStatusUI('business-expense');
+        } else {
+            subSettings.classList.add('hidden');
+        }
+        // Only keep date and notes fields empty
+        document.getElementById('business-expense-date').value = '';
+        document.getElementById('business-expense-notes').value = '';
+    }
+
+    closeModal('autofill-modal');
+}
+
+// ==================== SUBSCRIPTION RECURRENCE GENERATION SYSTEM ====================
+function updateSubscriptionStatusUI(prefix) {
+    const statusSelect = document.getElementById(`${prefix}-sub-status`);
+    const statusBadge = document.getElementById(`${prefix}-status-badge`);
+    const unsubWrapper = document.getElementById(`${prefix}-unsubscribe-date-wrapper`);
+    const unsubInput = document.getElementById(`${prefix}-unsubscribe-date`);
+    
+    if (statusSelect.value === 'subscribe') {
+        statusBadge.textContent = 'Subscribed';
+        statusBadge.className = 'badge status-paid';
+        unsubWrapper.classList.add('hidden');
+        unsubInput.value = '';
+    } else {
+        statusBadge.textContent = 'Unsubscribed';
+        statusBadge.className = 'badge status-overdue';
+        unsubWrapper.classList.remove('hidden');
+    }
+}
+
+function getSubscriptionOccurrences(sub, startFilter, endFilter) {
+    const occurrences = [];
+    if (!sub.is_subscription) {
+        const d = new Date(sub.date);
+        if (d >= startFilter && d <= endFilter) {
+            occurrences.push({ ...sub, date: sub.date });
+        }
+        return occurrences;
+    }
+
+    const startDate = new Date(sub.date);
+    const frequency = (sub.frequency || 'monthly').toLowerCase();
+    
+    // Unsubscribe Date limit
+    let unsubLimit = null;
+    if (sub.unsubscribe_date) {
+        unsubLimit = new Date(sub.unsubscribe_date);
+    }
+
+    // Current local date (Today) limit
+    const todayLimit = new Date();
+    todayLimit.setHours(23, 59, 59, 999);
+
+    // Limit date is the minimum of unsubscribe date (if set) and today
+    let maxDate = todayLimit;
+    if (unsubLimit && unsubLimit < maxDate) {
+        maxDate = unsubLimit;
+    }
+
+    let current = new Date(startDate);
+    
+    while (current <= maxDate) {
+        if (current >= startFilter && current <= endFilter) {
+            occurrences.push({
+                ...sub,
+                date: current.toISOString(),
+                isOccurrence: true
+            });
+        }
+
+        if (frequency === 'monthly') {
+            current.setMonth(current.getMonth() + 1);
+        } else if (frequency === 'yearly') {
+            current.setFullYear(current.getFullYear() + 1);
+        } else {
+            break;
+        }
+    }
+
+    return occurrences;
+}
+
+function getExpandedExpenses(expensesPool, startFilter, endFilter) {
+    const start = startFilter || new Date(0);
+    const end = endFilter || new Date(9999, 11, 31);
+    let expanded = [];
+    expensesPool.forEach(row => {
+        expanded = [...expanded, ...getSubscriptionOccurrences(row, start, end)];
+    });
+    return expanded;
 }
