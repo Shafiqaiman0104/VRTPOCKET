@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VRTPocket - Advanced Wealth Management Platform</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- PocketBase SDK -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pocketbase/0.21.3/pocketbase.umd.js"></script>
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- App Notifications -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay hidden">
+        <div class="spinner-box">
+            <div class="pulse-container">
+                <div class="pulse-bubble pulse-bubble-1"></div>
+                <div class="pulse-bubble pulse-bubble-2"></div>
+                <div class="pulse-bubble pulse-bubble-3"></div>
+            </div>
+            <p>Processing transaction...</p>
+        </div>
+    </div>
+
+    <!-- Sidebar Overlay for Mobile Drawer -->
+    <div id="sidebar-overlay" class="sidebar-overlay hidden"></div>
+
+    <!-- ==================== AUTH CONTAINER ==================== -->
+    <div id="auth-container" class="auth-container">
+        <div class="auth-card glass">
+            <div class="auth-header">
+                <div class="auth-brand">
+                    <img id="app-logo-auth" src="vrLogoBlue.png" alt="VRTPocket Logo" class="brand-logo-img">
+                    <h1 class="brand-text">VRTPocket</h1>
+                </div>
+                <p class="auth-subtitle">Wealth Managment Portal</p>
+            </div>
+
+            <!-- Login Form -->
+            <form id="login-form" class="auth-form">
+                <div class="input-group">
+                    <label for="login-email"><i class="fa-regular fa-envelope"></i> Email Address</label>
+                    <input type="email" id="login-email" required placeholder="name@company.com">
+                </div>
+                <div class="input-group">
+                    <label for="login-password"><i class="fa-solid fa-lock"></i> Password</label>
+                    <input type="password" id="login-password" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Sign In <i class="fa-solid fa-arrow-right-to-bracket"></i></button>
+                <div class="auth-toggle">
+                    Don't have an account? <span id="toggle-to-signup" class="toggle-link">Create Account</span>
+                </div>
+            </form>
+
+            <!-- Signup Form -->
+            <form id="signup-form" class="auth-form hidden">
+                <div class="input-group">
+                    <label for="signup-email"><i class="fa-regular fa-envelope"></i> Email Address *</label>
+                    <input type="email" id="signup-email" required placeholder="name@company.com">
+                </div>
+                <div class="input-grid">
+                    <div class="input-group">
+                        <label for="signup-password"><i class="fa-solid fa-lock"></i> Password *</label>
+                        <input type="password" id="signup-password" required placeholder="Min. 8 characters">
+                    </div>
+                    <div class="input-group">
+                        <label for="signup-password-confirm"><i class="fa-solid fa-circle-check"></i> Confirm Password *</label>
+                        <input type="password" id="signup-password-confirm" required placeholder="••••••••">
+                    </div>
+                </div>
+                <hr class="form-divider">
+                <div class="input-group">
+                    <label for="signup-company-name"><i class="fa-solid fa-building"></i> Company / Organization Name</label>
+                    <input type="text" id="signup-company-name" placeholder="Acme Corporation">
+                </div>
+                <div class="input-group">
+                    <label for="signup-company-logo"><i class="fa-regular fa-image"></i> Company Logo</label>
+                    <input type="file" id="signup-company-logo" accept="image/*">
+                    <span class="input-help">Format: PNG, JPG, WebP. Used in invoice generation.</span>
+                </div>
+                <div class="input-grid">
+                    <div class="input-group">
+                        <label for="signup-currency"><i class="fa-solid fa-coins"></i> Default Currency</label>
+                        <select id="signup-currency">
+                            <option value="USD" selected>USD ($)</option>
+                            <option value="MYR">MYR (RM)</option>
+                            <option value="EUR">EUR (€)</option>
+                            <option value="GBP">GBP (£)</option>
+                            <option value="SGD">SGD (S$)</option>
+                            <option value="AUD">AUD (A$)</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="signup-company-phone"><i class="fa-solid fa-phone"></i> Contact Phone</label>
+                        <input type="text" id="signup-company-phone" placeholder="+1 555-0199">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="signup-company-address"><i class="fa-solid fa-location-dot"></i> Billing Address</label>
+                    <textarea id="signup-company-address" rows="2" placeholder="123 Corporate Blvd, Suite 100, City, Country"></textarea>
+                </div>
+                <button type="submit" class="btn btn-accent btn-block">Sign Up <i class="fa-solid fa-user-plus"></i></button>
+                <div class="auth-toggle">
+                    Already have an account? <span id="toggle-to-login" class="toggle-link">Return to Sign In</span>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ==================== MAIN DASHBOARD CONTAINER ==================== -->
+    <div id="main-container" class="main-container hidden">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar glass">
+            <div class="sidebar-header">
+                <div class="brand">
+                    <img id="app-logo-sidebar" src="vrLogoBlue.png" alt="VRTPocket Logo" class="brand-logo-img">
+                    <span class="brand-text">VRTPocket</span>
+                    <button class="sidebar-close-btn" id="sidebar-close-btn" title="Close navigation menu">&times;</button>
+                </div>
+                <div class="user-company-badge">
+                    <img id="header-company-logo" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%236366f1' d='M12 2L2 22h20L12 2z'/%3E%3C/svg%3E" alt="Logo" class="company-logo-avatar">
+                    <div class="user-company-info">
+                        <div id="header-company-name" class="company-name-text">Loading Co.</div>
+                        <div id="header-user-email" class="user-email-text">user@email.com</div>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="nav-menu">
+                <a href="#dashboard" class="nav-link active" data-tab="dashboard-tab">
+                    <i class="fa-solid fa-circle-nodes"></i> <span>Dashboard</span>
+                </a>
+                <div class="nav-section-title">Operations</div>
+                <a href="#personal" class="nav-link" data-tab="personal-tab">
+                    <i class="fa-solid fa-user-gear"></i> <span>Personal Wealth</span>
+                </a>
+                <a href="#business" class="nav-link" data-tab="business-tab">
+                    <i class="fa-solid fa-wallet"></i> <span>Business Finance</span>
+                </a>
+                <a href="#investments" class="nav-link" data-tab="investments-tab">
+                    <i class="fa-solid fa-arrow-trend-up"></i> <span>Investments & ROI</span>
+                </a>
+                <a href="#invoices" class="nav-link" data-tab="invoices-tab">
+                    <i class="fa-solid fa-file-invoice-dollar"></i> <span>Invoice Suite</span>
+                </a>
+                <div class="nav-section-title">Intelligence</div>
+                <a href="#reports" class="nav-link" data-tab="reports-tab">
+                    <i class="fa-solid fa-file-shield"></i> <span>Reports Engine</span>
+                </a>
+                <a href="#profile" class="nav-link" data-tab="profile-tab">
+                    <i class="fa-solid fa-sliders"></i> <span>System Settings</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button id="logout-btn" class="btn btn-outline btn-block btn-logout">
+                    <i class="fa-solid fa-power-off"></i> <span>Logout</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="content-wrapper">
+            
+            <!-- TOP BAR -->
+            <header class="topbar glass">
+                <div class="topbar-left">
+                    <button class="btn btn-icon btn-menu-toggle" id="menu-toggle-btn" title="Toggle Navigation Menu">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <div class="dashboard-dropdown-wrapper">
+                        <h2 id="page-title" class="page-title">Financial Dashboard</h2>
+                        <div id="dashboard-segment-selector" class="dashboard-segment-selector">
+                            <button id="dashboard-segment-btn" class="dashboard-segment-btn" title="Filter Dashboard View">
+                                <i class="fa-solid fa-chevron-down"></i>
+                            </button>
+                            <div id="dashboard-segment-menu" class="dashboard-segment-menu hidden">
+                                <button class="segment-menu-item active" data-segment="all"><i class="fa-solid fa-globe"></i> All-in-One Dashboard</button>
+                                <button class="segment-menu-item" data-segment="personal"><i class="fa-solid fa-user"></i> Personal Only</button>
+                                <button class="segment-menu-item" data-segment="business"><i class="fa-solid fa-briefcase"></i> Business Only</button>
+                                <button class="segment-menu-item" data-segment="investments"><i class="fa-solid fa-chart-line"></i> Investments Only</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="topbar-actions">
+                    <span class="currency-indicator"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading...</span>
+                    <button class="btn btn-icon" id="theme-toggle" title="Toggle Appearance Mode">
+                        <i class="fa-solid fa-moon"></i>
+                    </button>
+                </div>
+            </header>
+
+            <div class="content-body">
+                <!-- ==================== TAB: DASHBOARD ==================== -->
+                <section id="dashboard-tab" class="tab-pane active">
+                    <div class="dashboard-banner">
+                        <div class="banner-text">
+                            <h3>Welcome back, <span class="text-gradient font-bold" id="dashboard-welcome-name">User</span>!</h3>
+                            <p>Here is your current financial index and health status summary.</p>
+                        </div>
+                    </div>
+
+                    <!-- Mini Stat Cards -->
+                    <div class="metrics-grid">
+                        <!-- Stat Card 1 -->
+                        <div id="card-wrapper-personal" class="card stat-card glass glow-indigo">
+                            <div class="stat-icon"><i class="fa-solid fa-vault"></i></div>
+                            <div class="stat-info">
+                                <span class="stat-label">Net Personal Value</span>
+                                <h3 id="stat-personal-net" class="stat-value">$0.00</h3>
+                                <p class="stat-subtext"><span class="text-emerald" id="stat-personal-income-sum">+$0.00</span> | <span class="text-rose" id="stat-personal-expense-sum">-$0.00</span></p>
+                            </div>
+                        </div>
+                        <!-- Stat Card 2 -->
+                        <div id="card-wrapper-business" class="card stat-card glass glow-emerald">
+                            <div class="stat-icon"><i class="fa-solid fa-building-columns"></i></div>
+                            <div class="stat-info">
+                                <span class="stat-label">Net Business Value</span>
+                                <h3 id="stat-business-net" class="stat-value">$0.00</h3>
+                                <p class="stat-subtext"><span class="text-emerald" id="stat-business-income-sum">+$0.00</span> | <span class="text-rose" id="stat-business-expense-sum">-$0.00</span></p>
+                            </div>
+                        </div>
+                        <!-- Stat Card 3 -->
+                        <div id="card-wrapper-investments" class="card stat-card glass glow-purple">
+                            <div class="stat-icon"><i class="fa-solid fa-chart-pie"></i></div>
+                            <div class="stat-info">
+                                <span class="stat-label">Investments Asset Value</span>
+                                <h3 id="stat-investments-value" class="stat-value">$0.00</h3>
+                                <p class="stat-subtext">Total ROI: <span class="text-emerald" id="stat-investments-roi">0.00%</span></p>
+                            </div>
+                        </div>
+                        <!-- Stat Card 4 -->
+                        <div id="card-wrapper-invoices" class="card stat-card glass glow-amber">
+                            <div class="stat-icon"><i class="fa-solid fa-file-invoice"></i></div>
+                            <div class="stat-info">
+                                <span class="stat-label">Invoice Ledger</span>
+                                <h3 id="stat-invoices-outstanding" class="stat-value">$0.00</h3>
+                                <p class="stat-subtext"><span id="stat-invoices-paid-count">0</span> Paid | <span id="stat-invoices-pending-count">0</span> Pending</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts Row -->
+                    <div class="layout-grid-2">
+                        <div id="card-wrapper-cashflow-chart" class="card glass chart-card">
+                            <div class="card-header">
+                                <h4>Cashflow Trends (Income vs Expenses)</h4>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="cashflowTrendChart"></canvas>
+                            </div>
+                        </div>
+                        <div id="card-wrapper-expense-chart" class="card glass chart-card">
+                            <div class="card-header">
+                                <h4 id="expense-chart-title">Expense Breakdown by Categories</h4>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="expenseDistributionChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Lower Overview Grid -->
+                    <div class="layout-grid-2">
+                        <!-- Upcoming Subscriptions -->
+                        <div id="card-wrapper-subscriptions-list" class="card glass">
+                            <div class="card-header">
+                                <h4>Active Subscriptions Due</h4>
+                            </div>
+                            <div class="table-wrapper">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Description</th>
+                                            <th>Type</th>
+                                            <th>Amount</th>
+                                            <th>Interval</th>
+                                            <th>Next Due Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="dashboard-subscriptions-list">
+                                        <tr>
+                                            <td colspan="5" class="text-center text-muted">No active subscriptions detected.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Investment Performance List -->
+                        <div id="card-wrapper-investments-list" class="card glass">
+                            <div class="card-header">
+                                <h4>Top Investments</h4>
+                            </div>
+                            <div class="table-wrapper">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Asset</th>
+                                            <th>Original</th>
+                                            <th>Current Value</th>
+                                            <th>ROI</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="dashboard-investments-list">
+                                        <tr>
+                                            <td colspan="4" class="text-center text-muted">No investments logged.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ==================== TAB: PERSONAL WEALTH ==================== -->
+                <section id="personal-tab" class="tab-pane">
+                    <!-- Action Headers -->
+                    <div class="tab-actions-header">
+                        <div class="btn-group">
+                            <button class="btn btn-primary" id="btn-add-p-income"><i class="fa-solid fa-plus"></i> Add Income</button>
+                            <button class="btn btn-accent" id="btn-add-p-expense"><i class="fa-solid fa-plus"></i> Add Expense/Subscription</button>
+                        </div>
+                    </div>
+
+                    <div class="layout-grid-2">
+                        <!-- Personal Income Table -->
+                        <div class="card glass">
+                            <div class="card-header border-b">
+                                <h4>Personal Income Ledger</h4>
+                            </div>
+                            <div class="table-wrapper">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Title</th>
+                                            <th>Amount</th>
+                                            <th>Frequency</th>
+                                            <th>Date</th>
+                                            <th>Category</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="personal-income-list">
+                                        <tr>
+                                            <td colspan="6" class="text-center text-muted">Loading data...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Personal Expenses Table -->
+                        <div class="card glass">
+                            <div class="card-header border-b">
+                                <h4>Personal Expenses & Subscriptions Ledger</h4>
+                            </div>
+                            <div class="table-wrapper">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Title</th>
+                                            <th>Amount</th>
+                                            <th>Type</th>
+                                            <th>Frequency</th>
+                                            <th>Next Due Date</th>
+                                            <th>Category</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="personal-expense-list">
+                                        <tr>
+                                            <td colspan="7" class="text-center text-muted">Loading data...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ==================== TAB: BUSINESS FINANCE ==================== -->
+                <section id="business-tab" class="tab-pane">
+                    <div class="tab-actions-header">
+                        <div class="btn-group">
+                            <button class="btn btn-primary" id="btn-add-b-income"><i class="fa-solid fa-plus"></i> Add Income</button>
+                            <button class="btn btn-accent" id="btn-add-b-expense"><i class="fa-solid fa-plus"></i> Add Expense/Subscription</button>
+                        </div>
+                    </div>
+
+                    <div class="layout-grid-2">
+                        <!-- Business Income Table -->
+                        <div class="card glass">
+                            <div class="card-header border-b">
+                                <h4>Business Income Ledger</h4>
+                            </div>
+                            <div class="table-wrapper">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Title</th>
+                                            <th>Amount</th>
+                                            <th>Frequency</th>
+                                            <th>Date</th>
+                                            <th>Category</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="business-income-list">
+                                        <tr>
+                                            <td colspan="6" class="text-center text-muted">Loading data...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Business Expenses Table -->
+                        <div class="card glass">
+                            <div class="card-header border-b">
+                                <h4>Business Expenses & Subscriptions Ledger</h4>
+                            </div>
+                            <div class="table-wrapper">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Title</th>
+                                            <th>Amount</th>
+                                            <th>Type</th>
+                                            <th>Frequency</th>
+                                            <th>Next Due Date</th>
+                                            <th>Category</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="business-expense-list">
+                                        <tr>
+                                            <td colspan="7" class="text-center text-muted">Loading data...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ==================== TAB: INVESTMENTS ==================== -->
+                <section id="investments-tab" class="tab-pane">
+                    <div class="tab-actions-header">
+                        <button class="btn btn-primary" id="btn-add-investment"><i class="fa-solid fa-plus"></i> Log New Asset Investment</button>
+                    </div>
+
+                    <!-- Investments List -->
+                    <div class="card glass">
+                        <div class="card-header border-b">
+                            <h4>Investment Assets Portfolio</h4>
+                        </div>
+                        <div class="table-wrapper">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Asset Name</th>
+                                        <th>Asset Type</th>
+                                        <th>Capital Invested</th>
+                                        <th>Current Valuation</th>
+                                        <th>Total Fees/Expenses</th>
+                                        <th>Net Return</th>
+                                        <th>ROI %</th>
+                                        <th>Purchase Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="investments-list">
+                                    <tr>
+                                        <td colspan="9" class="text-center text-muted">Loading portfolio...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Investment Expenses Log Card -->
+                    <div class="card glass" style="margin-top: 2rem;">
+                        <div class="card-header border-b flex-space-between">
+                            <h4>Investment Expenses & Fees Log</h4>
+                            <button class="btn btn-sm btn-accent" id="btn-add-investment-expense-direct"><i class="fa-solid fa-plus"></i> Log General/Asset Expense</button>
+                        </div>
+                        <div class="table-wrapper">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Asset Name</th>
+                                        <th>Amount</th>
+                                        <th>Fee Type</th>
+                                        <th>Date Paid</th>
+                                        <th>Notes</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="investment-expenses-list">
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted">No investment expenses logged.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ==================== TAB: INVOICES ==================== -->
+                <section id="invoices-tab" class="tab-pane">
+                    <div class="tab-actions-header">
+                        <button class="btn btn-primary" id="btn-create-invoice"><i class="fa-solid fa-plus"></i> Design New Invoice</button>
+                    </div>
+
+                    <!-- Invoices List Container -->
+                    <div id="invoice-list-container" class="card glass">
+                        <div class="card-header border-b">
+                            <h4>Invoices Registry</h4>
+                        </div>
+                        <div class="table-wrapper">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Invoice #</th>
+                                        <th>Client</th>
+                                        <th>Issue Date</th>
+                                        <th>Due Date</th>
+                                        <th>Total Amount</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="invoices-table-body">
+                                    <tr>
+                                        <td colspan="7" class="text-center text-muted">Loading registry...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Invoice Builder / Editor (Hidden initially) -->
+                    <div id="invoice-builder-container" class="card glass hidden">
+                        <div class="card-header border-b flex-space-between">
+                            <h4 id="invoice-builder-title">Create Dynamic Invoice</h4>
+                            <button class="btn btn-outline btn-sm" id="btn-invoice-back"><i class="fa-solid fa-arrow-left"></i> Back to Registry</button>
+                        </div>
+                        <div class="card-body">
+                            <form id="invoice-form" class="app-form">
+                                <input type="hidden" id="invoice-record-id">
+                                
+                                <div class="layout-grid-3">
+                                    <div class="input-group">
+                                        <label for="invoice-number">Invoice Number *</label>
+                                        <input type="text" id="invoice-number" required placeholder="INV-2026-001">
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="invoice-issue-date">Issue Date *</label>
+                                        <input type="date" id="invoice-issue-date" required>
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="invoice-due-date">Due Date *</label>
+                                        <input type="date" id="invoice-due-date" required>
+                                    </div>
+                                </div>
+
+                                <div class="layout-grid-2">
+                                    <!-- Client info -->
+                                    <div class="invoice-box-sub glass-dark">
+                                        <h5>Client Details</h5>
+                                        <div class="input-group">
+                                            <label for="invoice-client-name">Client Name *</label>
+                                            <input type="text" id="invoice-client-name" required placeholder="Customer Corp Inc">
+                                        </div>
+                                        <div class="input-group">
+                                            <label for="invoice-client-email">Client Email</label>
+                                            <input type="email" id="invoice-client-email" placeholder="billing@client.com">
+                                        </div>
+                                        <div class="input-group">
+                                            <label for="invoice-client-address">Billing Address</label>
+                                            <textarea id="invoice-client-address" rows="2" placeholder="Street Address, State, ZIP"></textarea>
+                                        </div>
+                                    </div>
+
+                                    <!-- Status / Terms info -->
+                                    <div class="invoice-box-sub glass-dark">
+                                        <h5>Transaction Settings</h5>
+                                        <div class="input-group">
+                                            <label for="invoice-status">Invoice Status</label>
+                                            <select id="invoice-status">
+                                                <option value="Draft">Draft</option>
+                                                <option value="Sent">Sent</option>
+                                                <option value="Paid">Paid</option>
+                                                <option value="Overdue">Overdue</option>
+                                            </select>
+                                        </div>
+                                        <div class="input-group">
+                                            <label for="invoice-tax">Tax Rate (%)</label>
+                                            <input type="number" id="invoice-tax" min="0" max="100" value="0">
+                                        </div>
+                                        <div class="input-group">
+                                            <label for="invoice-discount">Discount Amount (Flat)</label>
+                                            <input type="number" id="invoice-discount" min="0" value="0">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Dynamic Line Items -->
+                                <div class="invoice-items-section">
+                                    <div class="flex-space-between item-section-title">
+                                        <h5>Line Items</h5>
+                                        <button type="button" class="btn btn-sm btn-accent" id="add-invoice-item-row"><i class="fa-solid fa-plus"></i> Add Item Row</button>
+                                    </div>
+                                    
+                                    <div class="invoice-items-table-wrapper">
+                                        <div class="invoice-items-headers">
+                                            <span class="col-desc">Description</span>
+                                            <span class="col-qty">Qty</span>
+                                            <span class="col-price">Unit Price</span>
+                                            <span class="col-total">Total</span>
+                                            <span class="col-actions"></span>
+                                        </div>
+                                        <div id="invoice-items-rows-container">
+                                            <!-- Dynamic items go here -->
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Summary & Notes -->
+                                <div class="layout-grid-2">
+                                    <div class="flex-column-gap">
+                                        <div class="input-group">
+                                            <label for="invoice-payment-details"><i class="fa-solid fa-building-columns"></i> Payment Details</label>
+                                            <textarea id="invoice-payment-details" rows="2" placeholder="Bank account info, wire instructions..."></textarea>
+                                        </div>
+                                        <div class="input-group">
+                                            <label for="invoice-notes"><i class="fa-regular fa-comment-dots"></i> Notes / Terms</label>
+                                            <textarea id="invoice-notes" rows="2" placeholder="Terms: Net 30, Thank you for your business!"></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="invoice-totals-box">
+                                        <div class="total-row"><span>Subtotal:</span><span id="invoice-summary-subtotal">$0.00</span></div>
+                                        <div class="total-row"><span>Tax:</span><span id="invoice-summary-tax">$0.00</span></div>
+                                        <div class="total-row"><span>Discount:</span><span id="invoice-summary-discount">-$0.00</span></div>
+                                        <div class="total-row grand-total"><span>Grand Total:</span><span id="invoice-summary-total">$0.00</span></div>
+                                    </div>
+                                </div>
+
+                                <div class="btn-group justify-end">
+                                    <button type="button" class="btn btn-outline" id="btn-invoice-cancel">Cancel</button>
+                                    <button type="submit" class="btn btn-primary">Save Invoice & Render</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Invoice Interactive Template View / Printer (Hidden initially) -->
+                    <div id="invoice-view-container" class="card glass hidden">
+                        <div class="card-header border-b flex-space-between print-hidden">
+                            <h4>Invoice Viewer</h4>
+                            <div class="btn-group">
+                                <button class="btn btn-primary" id="btn-invoice-print"><i class="fa-solid fa-print"></i> Print / Save PDF</button>
+                                <button class="btn btn-outline" id="btn-invoice-close-view"><i class="fa-solid fa-arrow-left"></i> Return</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Printable Paper Wrapper -->
+                        <div id="invoice-paper" class="invoice-paper">
+                            <div class="invoice-paper-header">
+                                <div class="invoice-company-side">
+                                    <img id="invoice-paper-logo" src="" alt="Company Logo" class="invoice-logo-print">
+                                    <h2 id="invoice-paper-company-name">Company Name</h2>
+                                    <p id="invoice-paper-company-address">Company Address</p>
+                                    <p id="invoice-paper-company-contact">Phone & Email</p>
+                                </div>
+                                <div class="invoice-title-side text-right">
+                                    <h1 class="invoice-title-text">INVOICE</h1>
+                                    <div class="invoice-meta-fields">
+                                        <div><strong>Invoice #:</strong> <span id="invoice-paper-number"></span></div>
+                                        <div><strong>Issue Date:</strong> <span id="invoice-paper-issue-date"></span></div>
+                                        <div><strong>Due Date:</strong> <span id="invoice-paper-due-date"></span></div>
+                                        <div><strong>Status:</strong> <span id="invoice-paper-status" class="badge"></span></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr class="print-hr">
+
+                            <div class="invoice-paper-billing">
+                                <h5>BILLED TO:</h5>
+                                <h4 id="invoice-paper-client-name">Client Name</h4>
+                                <p id="invoice-paper-client-address">Client Address</p>
+                                <p id="invoice-paper-client-email">Client Email</p>
+                            </div>
+
+                            <div class="table-wrapper">
+                                <table class="invoice-paper-items">
+                                    <thead>
+                                        <tr>
+                                            <th>Description</th>
+                                            <th class="text-right">Qty</th>
+                                            <th class="text-right">Unit Price</th>
+                                            <th class="text-right font-bold">Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="invoice-paper-items-list">
+                                        <!-- Items filled dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="invoice-paper-footer-grid">
+                                <div class="flex-column-gap">
+                                    <div class="invoice-paper-payment-details" id="invoice-paper-payment-details-box">
+                                        <h5>Payment Details:</h5>
+                                        <p id="invoice-paper-payment-details-text"></p>
+                                    </div>
+                                    <div class="invoice-paper-notes">
+                                        <h5>Notes / Terms:</h5>
+                                        <p id="invoice-paper-notes-text">Notes...</p>
+                                    </div>
+                                </div>
+                                <div class="paper-totals-box">
+                                    <div class="p-row"><span>Subtotal:</span><span id="invoice-paper-subtotal">$0.00</span></div>
+                                    <div class="p-row"><span>Tax:</span><span id="invoice-paper-tax">$0.00</span></div>
+                                    <div class="p-row"><span>Discount:</span><span id="invoice-paper-discount">-$0.00</span></div>
+                                    <div class="p-row p-grand-total"><span>Grand Total:</span><span id="invoice-paper-total">$0.00</span></div>
+                                </div>
+                            </div>
+
+                            <div class="print-footer-brand">
+                                Powered By <strong><em>VRTPocket</em></strong>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ==================== TAB: REPORTS ==================== -->
+                <section id="reports-tab" class="tab-pane">
+                    <div class="card glass">
+                        <div class="card-header border-b print-hidden">
+                            <h4>Financial Report Generator</h4>
+                        </div>
+                        <div class="card-body print-hidden">
+                            <form id="report-filter-form" class="app-form">
+                                <div class="layout-grid-3">
+                                    <div class="input-group">
+                                        <label for="report-start-date">Start Date</label>
+                                        <input type="date" id="report-start-date">
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="report-end-date">End Date</label>
+                                        <input type="date" id="report-end-date">
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="report-segment">Scope</label>
+                                        <select id="report-segment">
+                                            <option value="all" selected>All (Personal + Business + Investments)</option>
+                                            <option value="personal">Personal Operations Only</option>
+                                            <option value="business">Business Operations Only</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="btn-group justify-end">
+                                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-gears"></i> Compile Intelligence</button>
+                                    <button type="button" class="btn btn-outline" id="btn-print-report"><i class="fa-solid fa-print"></i> Export / Print Document</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Printable Report Sheet -->
+                    <div id="report-document" class="report-document glass">
+                        <!-- Cover Header -->
+                        <div class="report-doc-header">
+                            <div class="brand">
+                                <img id="report-company-logo" src="" alt="Company Logo" class="invoice-logo-print">
+                                <h1 id="report-company-name">Company Name</h1>
+                            </div>
+                            <div class="report-meta text-right">
+                                <h2>FINANCIAL SUMMARY STATEMENT</h2>
+                                <p>Generated on: <span id="report-gen-date">YYYY-MM-DD</span></p>
+                                <p>Period: <span id="report-period-text">All Time</span></p>
+                            </div>
+                        </div>
+
+                        <hr class="print-hr">
+
+                        <!-- High Level Aggregates -->
+                        <div class="report-grids">
+                            <div class="report-summary-card">
+                                <h5>Total Cash Inflow</h5>
+                                <h2 id="report-total-income" class="text-emerald">$0.00</h2>
+                            </div>
+                            <div class="report-summary-card">
+                                <h5>Total Cash Outflow</h5>
+                                <h2 id="report-total-expenses" class="text-rose">$0.00</h2>
+                            </div>
+                            <div class="report-summary-card">
+                                <h5>Net Operational Surplus</h5>
+                                <h2 id="report-net-surplus">$0.00</h2>
+                            </div>
+                            <div class="report-summary-card">
+                                <h5>Investment Value (ROI)</h5>
+                                <h2 id="report-investment-summary">$0.00 (0.00%)</h2>
+                            </div>
+                        </div>
+
+                        <!-- Data Breakdowns -->
+                        <div class="report-details-section">
+                            <h4>Financial Category Distribution</h4>
+                            <div class="table-wrapper">
+                                <table class="report-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Category</th>
+                                            <th>Classification</th>
+                                            <th>Type</th>
+                                            <th class="text-right">Total Transacted</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="report-distribution-body">
+                                        <!-- Dynamic report breakdown -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="report-details-section">
+                            <h4>Significant Transactions logged</h4>
+                            <div class="table-wrapper">
+                                <table class="report-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Classification</th>
+                                            <th>Title</th>
+                                            <th>Frequency</th>
+                                            <th class="text-right">Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="report-transactions-body">
+                                        <!-- Dynamic report transactions -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="print-footer-brand">
+                            Powered By <strong><em>VRTPocket</em></strong>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ==================== TAB: SYSTEM PROFILE ==================== -->
+                <section id="profile-tab" class="tab-pane">
+                    <div class="card glass max-width-800">
+                        <div class="card-header border-b">
+                            <h4>System Profile & Organization Settings</h4>
+                        </div>
+                        <div class="card-body">
+                            <form id="profile-form" class="app-form">
+                                <div class="profile-avatar-upload">
+                                    <div class="avatar-preview-box">
+                                        <img id="profile-logo-preview" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%236366f1' d='M12 2L2 22h20L12 2z'/%3E%3C/svg%3E" alt="Logo Preview">
+                                    </div>
+                                    <div class="avatar-upload-info">
+                                        <label for="profile-logo-input" class="btn btn-accent"><i class="fa-solid fa-upload"></i> Upload Logo File</label>
+                                        <input type="file" id="profile-logo-input" accept="image/*" class="hidden">
+                                        <p class="text-muted text-sm">Upload PNG, JPG, or WebP. Transparent backgrounds look best on invoices.</p>
+                                    </div>
+                                </div>
+
+                                <div class="input-group">
+                                    <label for="profile-company-name">Company Name</label>
+                                    <input type="text" id="profile-company-name" required placeholder="Acme Ltd.">
+                                </div>
+
+                                <div class="input-grid">
+                                    <div class="input-group">
+                                        <label for="profile-company-email">Company Email</label>
+                                        <input type="email" id="profile-company-email" placeholder="billing@company.com">
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="profile-company-phone">Company Phone</label>
+                                        <input type="text" id="profile-company-phone" placeholder="+1 (555) 012-3456">
+                                    </div>
+                                </div>
+
+                                <div class="input-grid">
+                                    <div class="input-group">
+                                        <label for="profile-currency">App Base Currency</label>
+                                        <select id="profile-currency">
+                                            <option value="USD">USD ($)</option>
+                                            <option value="MYR">MYR (RM)</option>
+                                            <option value="EUR">EUR (€)</option>
+                                            <option value="GBP">GBP (£)</option>
+                                            <option value="SGD">SGD (S$)</option>
+                                            <option value="AUD">AUD (A$)</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="input-group">
+                                    <label for="profile-bank-details"><i class="fa-solid fa-building-columns"></i> Default Bank Details (Auto-fills Payment Details on Invoices)</label>
+                                    <textarea id="profile-bank-details" rows="2" placeholder="Bank Name: ABC Bank&#10;Account Number: 123-456-789&#10;SWIFT/IBAN: ..."></textarea>
+                                </div>
+
+                                <div class="input-group">
+                                    <label for="profile-invoice-notes-terms"><i class="fa-regular fa-comment-dots"></i> Default Invoice Notes / Terms (Auto-fills Notes / Terms on Invoices)</label>
+                                    <textarea id="profile-invoice-notes-terms" rows="2" placeholder="Terms: Net 30, Thank you for your business!"></textarea>
+                                </div>
+
+                                <div class="input-group">
+                                    <label for="profile-company-address">Billing Address</label>
+                                    <textarea id="profile-company-address" rows="3" placeholder="Suite 404, Corporate Tower..."></textarea>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary">Update Profile Settings <i class="fa-solid fa-circle-check"></i></button>
+                            </form>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- ==================== MODALS SECTION ==================== -->
+
+    <!-- Personal Income Modal -->
+    <div id="personal-income-modal" class="modal-overlay hidden">
+        <div class="modal-card glass">
+            <div class="modal-header">
+                <h4 id="personal-income-modal-title">Log Personal Income</h4>
+                <button class="btn-close" id="close-p-income-modal">&times;</button>
+            </div>
+            <form id="personal-income-form" class="app-form">
+                <input type="hidden" id="personal-income-id">
+                <div class="input-group">
+                    <label for="personal-income-title">Source / Title *</label>
+                    <input type="text" id="personal-income-title" required placeholder="Salary, Consultancy, Dividends">
+                </div>
+                <div class="input-grid">
+                    <div class="input-group">
+                        <label for="personal-income-amount">Amount *</label>
+                        <input type="number" id="personal-income-amount" step="0.01" required placeholder="0.00">
+                    </div>
+                    <div class="input-group">
+                        <label for="personal-income-currency-label">Currency</label>
+                        <input type="text" class="form-control-disabled" id="personal-income-currency-label" readonly value="USD">
+                    </div>
+                </div>
+                <div class="input-grid">
+                    <div class="input-group">
+                        <label for="personal-income-frequency">Frequency</label>
+                        <select id="personal-income-frequency">
+                            <option value="one-time">One-time</option>
+                            <option value="monthly">Monthly</option>
+                            <option value="yearly">Yearly</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="personal-income-date">Date Received *</label>
+                        <input type="date" id="personal-income-date" required>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="personal-income-category">Category</label>
+                    <select id="personal-income-category">
+                        <option value="Salary">Salary</option>
+                        <option value="Investments">Investments</option>
+                        <option value="Gifts">Gifts</option>
+                        <option value="Side Hustle">Side Hustle</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="personal-income-notes">Memo Notes</label>
+                    <textarea id="personal-income-notes" rows="2" placeholder="Additional ledger details..."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" id="btn-close-p-income-form">Discard</button>
+                    <button type="submit" class="btn btn-primary">Save Income</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Personal Expense Modal -->
+    <div id="personal-expense-modal" class="modal-overlay hidden">
+        <div class="modal-card glass">
+            <div class="modal-header">
+                <h4 id="personal-expense-modal-title">Log Personal Expense</h4>
+                <button class="btn-close" id="close-p-expense-modal">&times;</button>
+            </div>
+            <form id="personal-expense-form" class="app-form">
+                <input type="hidden" id="personal-expense-id">
+                <div class="input-group">
+                    <label for="personal-expense-title">Expense Title *</label>
+                    <input type="text" id="personal-expense-title" required placeholder="Rent, Netflix, Grocery">
+                </div>
+                <div class="input-grid">
+                    <div class="input-group">
+                        <label for="personal-expense-amount">Cost Amount *</label>
+                        <input type="number" id="personal-expense-amount" step="0.01" required placeholder="0.00">
+                    </div>
+                    <div class="input-group">
+                        <label for="personal-expense-date">Date / Start Date *</label>
+                        <input type="date" id="personal-expense-date" required>
+                    </div>
+                </div>
+                <div class="input-grid">
+                    <div class="input-group">
+                        <label for="personal-expense-frequency">Billing Cycle</label>
+                        <select id="personal-expense-frequency">
+                            <option value="one-time">One-time</option>
+                            <option value="monthly">Monthly</option>
+                            <option value="yearly">Yearly</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="personal-expense-category">Category</label>
+                        <select id="personal-expense-category">
+                            <option value="Housing">Housing</option>
+                            <option value="Food">Food</option>
+                            <option value="Transport">Transport</option>
+                            <option value="Entertainment">Entertainment</option>
+                            <option value="Utilities">Utilities</option>
+                            <option value="Health">Health</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="input-group-row">
+                    <input type="checkbox" id="personal-expense-is-subscription" class="form-checkbox">
+                    <label for="personal-expense-is-subscription" class="checkbox-label">Flag as recurring Subscription</label>
+                </div>
+                <div class="input-group">
+                    <label for="personal-expense-notes">Notes</label>
+                    <textarea id="personal-expense-notes" rows="2" placeholder="Remarks..."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" id="btn-close-p-expense-form">Discard</button>
+                    <button type="submit" class="btn btn-primary">Save Expense</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Business Income Modal -->
+    <div id="business-income-modal" class="modal-overlay hidden">
+        <div class="modal-card glass">
+            <div class="modal-header">
+                <h4 id="business-income-modal-title">Log Business Revenue</h4>
+                <button class="btn-close" id="close-b-income-modal">&times;</button>
+            </div>
+            <form id="business-income-form" class="app-form">
+                <input type="hidden" id="business-income-id">
+                <div class="input-group">
+                    <label for="business-income-title">Revenue Title *</label>
+                    <input type="text" id="business-income-title" required placeholder="Project Consulting, Product Sales">
+                </div>
+                <div class="input-grid">
+                    <div class="input-group">
+                        <label for="business-income-amount">Amount *</label>
+                        <input type="number" id="business-income-amount" step="0.01" required placeholder="0.00">
+                    </div>
+                    <div class="input-group">
+                        <label for="business-income-date">Date Received *</label>
+                        <input type="date" id="business-income-date" required>
+                    </div>
+                </div>
+                <div class="input-grid">
+                    <div class="input-group">
+                        <label for="business-income-frequency">Payment Frequency</label>
+                        <select id="business-income-frequency">
+                            <option value="one-time">One-time</option>
+                            <option value="monthly">Monthly</option>
+                            <option value="yearly">Yearly</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="business-income-category">Classification</label>
+                        <select id="business-income-category">
+                            <option value="Services">Services</option>
+                            <option value="Products">Products</option>
+                            <option value="Consulting">Consulting</option>
+                            <option value="Royalties">Royalties</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="business-income-notes">Ledger Memo</label>
+                    <textarea id="business-income-notes" rows="2" placeholder="Client details, references..."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" id="btn-close-b-income-form">Discard</button>
+                    <button type="submit" class="btn btn-primary">Save Revenue</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Business Expense Modal -->
+    <div id="business-expense-modal" class="modal-overlay hidden">
+        <div class="modal-card glass">
+            <div class="modal-header">
+                <h4 id="business-expense-modal-title">Log Business Expense</h4>
+                <button class="btn-close" id="close-b-expense-modal">&times;</button>
+            </div>
+            <form id="business-expense-form" class="app-form">
+                <input type="hidden" id="business-expense-id">
+                <div class="input-group">
+                    <label for="business-expense-title">Expense Title *</label>
+                    <input type="text" id="business-expense-title" required placeholder="AWS Cloud, SaaS, Office Rent">
+                </div>
+                <div class="input-grid">
+                    <div class="input-group">
+                        <label for="business-expense-amount">Cost Amount *</label>
+                        <input type="number" id="business-expense-amount" step="0.01" required placeholder="0.00">
+                    </div>
+                    <div class="input-group">
+                        <label for="business-expense-date">Expense Date *</label>
+                        <input type="date" id="business-expense-date" required>
+                    </div>
+                </div>
+                <div class="input-grid">
+                    <div class="input-group">
+                        <label for="business-expense-frequency">Billing Interval</label>
+                        <select id="business-expense-frequency">
+                            <option value="one-time">One-time</option>
+                            <option value="monthly">Monthly</option>
+                            <option value="yearly">Yearly</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="business-expense-category">Business Category</label>
+                        <select id="business-expense-category">
+                            <option value="Software/SaaS">Software/SaaS</option>
+                            <option value="Office Supply">Office Supply</option>
+                            <option value="Marketing">Marketing</option>
+                            <option value="Rent">Rent</option>
+                            <option value="Travel">Travel</option>
+                            <option value="Tax">Tax</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="input-group-row">
+                    <input type="checkbox" id="business-expense-is-subscription" class="form-checkbox">
+                    <label for="business-expense-is-subscription" class="checkbox-label">Flag as recurring Subscription</label>
+                </div>
+                <div class="input-group">
+                    <label for="business-expense-notes">Notes / Vendor details</label>
+                    <textarea id="business-expense-notes" rows="2" placeholder="SaaS account details, receipts references..."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" id="btn-close-b-expense-form">Discard</button>
+                    <button type="submit" class="btn btn-primary">Save Expense</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Investment Asset Modal -->
+    <div id="investment-modal" class="modal-overlay hidden">
+        <div class="modal-card glass">
+            <div class="modal-header">
+                <h4 id="investment-modal-title">Log Investment Asset</h4>
+                <button class="btn-close" id="close-investment-modal">&times;</button>
+            </div>
+            <form id="investment-form" class="app-form">
+                <input type="hidden" id="investment-id">
+                <div class="input-group">
+                    <label for="investment-name">Asset Name *</label>
+                    <input type="text" id="investment-name" required placeholder="Bitcoin, S&P 500 Index, Tesla Stock">
+                </div>
+                <div class="input-grid">
+                    <div class="input-group">
+                        <label for="investment-type">Asset Class</label>
+                        <select id="investment-type">
+                            <option value="Crypto">Crypto</option>
+                            <option value="Stocks">Stocks</option>
+                            <option value="Real Estate">Real Estate</option>
+                            <option value="Mutual Funds">Mutual Funds</option>
+                            <option value="Bonds">Bonds</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="investment-purchase-date">Purchase Date *</label>
+                        <input type="date" id="investment-purchase-date" required>
+                    </div>
+                </div>
+                <div class="input-grid">
+                    <div class="input-group">
+                        <label for="investment-initial">Initial Invested Capital *</label>
+                        <input type="number" id="investment-initial" step="0.01" required placeholder="0.00">
+                    </div>
+                    <div class="input-group">
+                        <label for="investment-current">Current Valuation *</label>
+                        <input type="number" id="investment-current" step="0.01" required placeholder="0.00">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="investment-notes">Asset details / Wallet Address / Account</label>
+                    <textarea id="investment-notes" rows="2" placeholder="Wallet or brokerage account notes..."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" id="btn-close-investment-form">Discard</button>
+                    <button type="submit" class="btn btn-primary">Save Asset</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Investment Expense / Transaction Fee Modal -->
+    <div id="investment-expense-modal" class="modal-overlay hidden">
+        <div class="modal-card glass">
+            <div class="modal-header">
+                <h4>Log Asset Expense / Fee</h4>
+                <button class="btn-close" id="close-investment-expense-modal">&times;</button>
+            </div>
+            <form id="investment-expense-form" class="app-form">
+                <div class="input-group">
+                    <label for="investment-expense-asset-id">Target Investment Asset *</label>
+                    <select id="investment-expense-asset-id" required>
+                        <!-- Filled dynamically from JavaScript -->
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="investment-expense-title">Expense / Fee Title *</label>
+                    <input type="text" id="investment-expense-title" required placeholder="Broker commission, Gas fee, Management tax">
+                </div>
+                <div class="input-grid">
+                    <div class="input-group">
+                        <label for="investment-expense-amount">Fee Amount *</label>
+                        <input type="number" id="investment-expense-amount" step="0.01" required placeholder="0.00">
+                    </div>
+                    <div class="input-group">
+                        <label for="investment-expense-date">Date Paid *</label>
+                        <input type="date" id="investment-expense-date" required>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="investment-expense-type">Fee Type</label>
+                    <select id="investment-expense-type">
+                        <option value="fee">Brokerage/Transaction Fee</option>
+                        <option value="tax">Tax</option>
+                        <option value="maintenance">Maintenance Costs</option>
+                        <option value="other">Other Outflow</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="investment-expense-notes">Notes</label>
+                    <textarea id="investment-expense-notes" rows="2" placeholder="Fee receipts references..."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" id="btn-close-investment-expense-form">Discard</button>
+                    <button type="submit" class="btn btn-primary">Save Fee</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Application Script -->
+    <script src="app.js"></script>
+</body>
+</html>
