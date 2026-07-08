@@ -1070,6 +1070,11 @@ a {
 .badge.status-draft { background: rgba(148, 163, 184, 0.15); color: var(--text-secondary); }
 .badge.status-overdue { background: rgba(244, 63, 94, 0.15); color: var(--rose); }
 
+.badge.inflow { background: rgba(16, 185, 129, 0.15); color: var(--emerald); }
+.badge.outflow { background: rgba(244, 63, 94, 0.15); color: var(--rose); }
+.badge.personal-badge { background: rgba(99, 102, 241, 0.15); color: var(--primary); }
+.badge.business-badge { background: rgba(245, 158, 11, 0.15); color: var(--amber); }
+
 /* Table Action Buttons */
 .tbl-actions {
     display: flex;
@@ -1496,6 +1501,13 @@ a {
     overflow-y: auto;
     position: relative;
     animation: modal-card-entrance var(--transition-fast) forwards;
+    background-color: #000000 !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+[data-theme="light"] .modal-card {
+    background-color: #ffffff !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
 }
 
 @keyframes modal-card-entrance {
