@@ -5,10 +5,9 @@
 
 // Initialize PocketBase
 const pbUrl = (
-    window.location.origin === "null" || 
-    window.location.origin.includes("file://") ||
-    ((window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost") && window.location.port !== "8090")
-) ? "https://pocketbase2.venturerushtech.com" : window.location.origin;
+    window.location.hostname === "localhost" && window.location.port === "8090" ||
+    window.location.hostname === "127.0.0.1" && window.location.port === "8090"
+) ? window.location.origin : "https://pocketbase2.venturerushtech.com";
 const pb = new PocketBase(pbUrl);
 
 // Application State
