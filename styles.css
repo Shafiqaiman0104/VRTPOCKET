@@ -1836,3 +1836,326 @@ a {
         padding-top: 1rem !important;
     }
 }
+
+/* ==================== MULTI-STEP SIGNUP & DYNAMIC CONTROLS ==================== */
+/* Stepper progress bar */
+.signup-stepper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    position: relative;
+    padding: 0 10px;
+}
+
+.signup-stepper::before {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: 10px;
+    right: 10px;
+    height: 3px;
+    background: var(--border-glass);
+    z-index: 1;
+}
+
+.signup-progress-line-fill {
+    position: absolute;
+    top: 20px;
+    left: 10px;
+    height: 3px;
+    background: var(--primary-gradient);
+    z-index: 2;
+    transition: width var(--transition-smooth);
+    width: 0%;
+}
+
+.signup-step-indicator {
+    position: relative;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: default;
+}
+
+.signup-step-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-glass);
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.95rem;
+    transition: all var(--transition-smooth);
+}
+
+.signup-step-indicator.active .signup-step-circle {
+    border-color: var(--primary);
+    color: var(--text-primary);
+    box-shadow: 0 0 15px var(--primary-glow);
+    background: var(--primary);
+}
+
+.signup-step-indicator.completed .signup-step-circle {
+    border-color: var(--emerald);
+    color: #ffffff;
+    background: var(--emerald);
+}
+
+.signup-step-text {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    transition: color var(--transition-smooth);
+}
+
+.signup-step-indicator.active .signup-step-text {
+    color: var(--text-primary);
+}
+
+.signup-step-indicator.completed .signup-step-text {
+    color: var(--emerald);
+}
+
+/* Form steps layout */
+.signup-form-step {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+/* Stepper footer controls */
+.signup-step-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+/* Premium toggle switch */
+.switch-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    background: var(--bg-glass-dark);
+    border: 1px solid var(--border-glass);
+    border-radius: var(--radius-sm);
+    margin-bottom: 1.5rem;
+}
+
+.switch-label-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.switch-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.switch-desc {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 26px;
+    flex-shrink: 0;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--border-glass);
+    transition: .4s;
+    border-radius: 34px;
+    border: 1px solid var(--border-glass);
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: var(--text-primary);
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background: var(--primary-gradient);
+}
+
+input:checked + .slider:before {
+    transform: translateX(24px);
+    background-color: #ffffff;
+}
+
+/* Disabled overlays / Grayscale styling for restricted content */
+.nav-link.disabled {
+    opacity: 0.45 !important;
+    pointer-events: none !important;
+    cursor: not-allowed !important;
+    position: relative;
+}
+
+.nav-link.disabled::after {
+    content: '\f023';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    position: absolute;
+    right: 1.25rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.stat-card.disabled {
+    opacity: 0.5 !important;
+    pointer-events: none !important;
+    filter: grayscale(0.8) blur(0.3px) !important;
+    position: relative;
+}
+
+.stat-card.disabled::before {
+    content: 'Company Features Disabled';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(9, 13, 22, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-size: 0.85rem;
+    font-weight: 700;
+    backdrop-filter: blur(1.5px);
+    border-radius: var(--radius-md);
+    z-index: 10;
+}
+
+.segment-menu-item.disabled {
+    opacity: 0.45 !important;
+    pointer-events: none !important;
+    cursor: not-allowed !important;
+    position: relative;
+}
+
+.segment-menu-item.disabled::after {
+    content: '\f023';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    margin-left: auto;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.settings-section-divider {
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--primary);
+    margin: 2rem 0 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-glass);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* ==================== INVOICE LINE ITEM HIERARCHY STYLES ==================== */
+.invoice-item-block {
+    border: 1px solid var(--border-glass);
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: var(--radius-sm);
+    padding: 1rem;
+    margin-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.invoice-item-row-header {
+    display: grid;
+    grid-template-columns: 2fr 80px 150px 150px 50px;
+    gap: 1rem;
+    align-items: center;
+    width: 100%;
+    min-width: 650px;
+}
+
+.invoice-item-row-header input {
+    background: var(--bg-glass-dark);
+    border: 1px solid var(--border-glass);
+    color: var(--text-primary);
+    padding: 0.6rem;
+    border-radius: var(--radius-sm);
+    outline: none;
+    font-family: inherit;
+    font-size: 0.9rem;
+}
+
+.invoice-item-row-header input:focus {
+    border-color: var(--border-glass-focus);
+}
+
+.invoice-sub-item-row {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    padding: 0.5rem;
+    border-top: 1px dashed var(--border-glass);
+    width: 100%;
+}
+
+.invoice-sub-item-row input {
+    background: var(--bg-glass-dark);
+    border: 1px solid var(--border-glass);
+    color: var(--text-primary);
+    border-radius: var(--radius-sm);
+    outline: none;
+    font-family: inherit;
+}
+
+.invoice-sub-item-row input:focus {
+    border-color: var(--border-glass-focus);
+}
+
+.btn-danger-outline {
+    border-color: rgba(244, 63, 94, 0.4) !important;
+    color: var(--rose) !important;
+}
+.btn-danger-outline:hover {
+    background: rgba(244, 63, 94, 0.15) !important;
+}
+
+.sub-item-paper-row td {
+    border-bottom: 1px dashed #e2e8f0 !important;
+}
+
