@@ -21,6 +21,10 @@ let dashboardDateTo = '';            // e.g. '2026-07-31'
 let charts = {};
 let currentAutofillContext = '';
 
+// Signup wizard state
+let signupCurrentStep = 1;
+let signupHasCompany = true;
+
 // Cache for dashboard data
 let appData = {
     personalIncome: [],
@@ -131,6 +135,7 @@ async function initApp() {
     if (pb.authStore.isValid && pb.authStore.model) {
         // Double check model type to verify it's our auth collection
         currentUser = pb.authStore.model;
+        applyCompanyRestrictions(currentUser);
         showDashboard();
     } else {
         showAuthScreen();
@@ -187,13 +192,16 @@ function showDashboard() {
     document.getElementById('auth-container').classList.add('hidden');
     document.getElementById('main-container').classList.remove('hidden');
     
+    // Apply Restrictions
+    applyCompanyRestrictions(currentUser);
+    
     // Set Header Info
     updateUserHeaderDisplay();
     
     // Route to dashboard initially or active hash
     const currentHash = window.location.hash ? window.location.hash.substring(1) + '-tab' : 'dashboard-tab';
     const activeLink = document.querySelector(`.nav-link[data-tab="${currentHash}"]`);
-    if (activeLink) {
+    if (activeLink && !activeLink.classList.contains('disabled')) {
         switchTab(currentHash);
     } else {
         switchTab('dashboard-tab');
@@ -206,21 +214,50 @@ function showDashboard() {
 function updateUserHeaderDisplay() {
     if (!currentUser) return;
     
-    const companyName = currentUser.company_name || 'My Organization';
-    const email = currentUser.email || '';
+    const hasCompany = !!currentUser.has_company;
     
-    document.getElementById('header-company-name').textContent = companyName;
-    document.getElementById('header-user-email').textContent = email;
-    document.getElementById('dashboard-welcome-name').textContent = companyName;
+    // 1. Update Personal Badge
+    const personalName = currentUser.name || 'Personal User';
+    const personalEmail = currentUser.personal_email || currentUser.email || '';
+    document.getElementById('header-personal-name').textContent = personalName;
+    document.getElementById('header-personal-email').textContent = personalEmail;
     
-    // Set Company logo if exists
-    const avatarImg = document.getElementById('header-company-logo');
-    if (currentUser.company_logo) {
-        const logoUrl = pb.files.getUrl(currentUser, currentUser.company_logo);
-        avatarImg.src = logoUrl;
-    } else {
-        avatarImg.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%236366f1' d='M12 2L2 22h20L12 2z'/%3E%3C/svg%3E";
+    const personalAvatarImg = document.getElementById('header-personal-avatar');
+    if (personalAvatarImg) {
+        if (currentUser.profile_picture) {
+            personalAvatarImg.src = pb.files.getUrl(currentUser, currentUser.profile_picture);
+        } else {
+            personalAvatarImg.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%236366f1' d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E";
+        }
     }
+    
+    // 2. Update Company Badge & Toggle Visibility
+    const companyBadge = document.getElementById('sidebar-company-badge');
+    if (companyBadge) {
+        if (hasCompany) {
+            companyBadge.classList.remove('hidden');
+            
+            const companyName = currentUser.company_name || 'My Organization';
+            const companyEmail = currentUser.company_email || currentUser.email || '';
+            document.getElementById('header-company-name').textContent = companyName;
+            document.getElementById('header-company-email').textContent = companyEmail;
+            
+            const companyLogoImg = document.getElementById('header-company-logo');
+            if (companyLogoImg) {
+                if (currentUser.company_logo) {
+                    companyLogoImg.src = pb.files.getUrl(currentUser, currentUser.company_logo);
+                } else {
+                    companyLogoImg.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%236366f1' d='M12 2L2 22h20L12 2z'/%3E%3C/svg%3E";
+                }
+            }
+        } else {
+            companyBadge.classList.add('hidden');
+        }
+    }
+    
+    // Welcome message showing personal name or company name
+    const welcomeName = currentUser.name || currentUser.company_name || 'User';
+    document.getElementById('dashboard-welcome-name').textContent = welcomeName;
     
     // Currency indicator
     const currencyStr = currentUser.currency || 'USD';
@@ -354,7 +391,10 @@ function setupEventListeners() {
     document.getElementById('toggle-to-signup').addEventListener('click', () => {
         document.getElementById('login-form').classList.add('hidden');
         document.getElementById('signup-form').classList.remove('hidden');
-        document.querySelector('.auth-subtitle').textContent = 'Create Organization Account';
+        document.querySelector('.auth-subtitle').textContent = 'Create Account';
+        // Reset wizard step
+        showSignupStep(1);
+        signupHasCompany = true;
     });
 
     document.getElementById('toggle-to-login').addEventListener('click', () => {
@@ -362,6 +402,111 @@ function setupEventListeners() {
         document.getElementById('login-form').classList.remove('hidden');
         document.querySelector('.auth-subtitle').textContent = 'Wealth Managment Portal';
     });
+
+    // Signup wizard stepper button clicks
+    document.getElementById('btn-signup-next-1').onclick = () => {
+        if (validateStepInputs('wizard-step-1')) {
+            const password = document.getElementById('signup-password').value;
+            const passwordConfirm = document.getElementById('signup-password-confirm').value;
+            if (password.length < 8) {
+                showToast('Password must be at least 8 characters long.', 'warning');
+                return;
+            }
+            if (password !== passwordConfirm) {
+                showToast('Passwords do not match.', 'error');
+                return;
+            }
+            showSignupStep(2);
+        }
+    };
+
+    // Autofill Personal Email with Login Email
+    const useSameEmailBtn = document.getElementById('signup-use-same-email');
+    if (useSameEmailBtn) {
+        useSameEmailBtn.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const loginEmail = document.getElementById('signup-email').value;
+            document.getElementById('signup-personal-email').value = loginEmail;
+            showToast('Email address copied!', 'success');
+        };
+    }
+
+    // Autofill Company Email with Login Email
+    const useSameEmailCompanyBtn = document.getElementById('signup-use-same-email-company');
+    if (useSameEmailCompanyBtn) {
+        useSameEmailCompanyBtn.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const loginEmail = document.getElementById('signup-email').value;
+            document.getElementById('signup-company-email').value = loginEmail;
+            showToast('Company email copied!', 'success');
+        };
+    }
+
+    document.getElementById('btn-signup-prev-2').onclick = () => {
+        showSignupStep(1);
+    };
+
+    document.getElementById('btn-signup-skip-2').onclick = () => {
+        signupHasCompany = false;
+        // Clear fields
+        document.getElementById('signup-company-name').value = '';
+        document.getElementById('signup-company-email').value = '';
+        document.getElementById('signup-company-phone').value = '';
+        document.getElementById('signup-company-address').value = '';
+        document.getElementById('signup-company-logo').value = '';
+        document.getElementById('signup-company-logo-preview').src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%236366f1' d='M12 2L2 22h20L12 2z'/%3E%3C/svg%3E";
+        showSignupStep(3);
+    };
+
+    document.getElementById('btn-signup-next-2').onclick = () => {
+        const cName = document.getElementById('signup-company-name').value.trim();
+        const cEmail = document.getElementById('signup-company-email').value.trim();
+        const cPhone = document.getElementById('signup-company-phone').value.trim();
+        const cAddress = document.getElementById('signup-company-address').value.trim();
+
+        if (!cName || !cEmail || !cPhone || !cAddress) {
+            showToast('Please fill up all company details or click "Skip Company" to register as a personal user.', 'warning');
+            return;
+        }
+        signupHasCompany = true;
+        showSignupStep(3);
+    };
+
+    document.getElementById('btn-signup-prev-3').onclick = () => {
+        showSignupStep(2);
+    };
+
+    // Signup avatar preview
+    const signupAvatarInput = document.getElementById('signup-profile-picture');
+    if (signupAvatarInput) {
+        signupAvatarInput.onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    document.getElementById('signup-avatar-preview').src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+    }
+
+    // Signup company logo preview
+    const signupLogoInput = document.getElementById('signup-company-logo');
+    if (signupLogoInput) {
+        signupLogoInput.onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    document.getElementById('signup-company-logo-preview').src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+    }
 
     // Dashboard Date Filter Handlers
     const dateFilterTypeSelect = document.getElementById('dashboard-date-filter-type');
@@ -498,11 +643,12 @@ function setupEventListeners() {
             return;
         }
 
-        const companyName = document.getElementById('signup-company-name').value || 'My Corporation';
-        const logoFile = document.getElementById('signup-company-logo').files[0];
+        const name = document.getElementById('signup-name').value;
+        const personalEmail = document.getElementById('signup-personal-email').value;
+        const personalPhone = document.getElementById('signup-personal-phone').value;
+        const profilePictureFile = document.getElementById('signup-profile-picture').files[0];
+        
         const currency = document.getElementById('signup-currency').value;
-        const phone = document.getElementById('signup-company-phone').value;
-        const address = document.getElementById('signup-company-address').value;
 
         showLoading(true);
         
@@ -511,13 +657,38 @@ function setupEventListeners() {
         formData.append('email', email);
         formData.append('password', password);
         formData.append('passwordConfirm', passwordConfirm);
-        formData.append('company_name', companyName);
-        formData.append('currency', currency);
-        formData.append('company_phone', phone);
-        formData.append('company_address', address);
         
-        if (logoFile) {
-            formData.append('company_logo', logoFile);
+        // Personal details
+        formData.append('name', name);
+        formData.append('personal_email', personalEmail);
+        formData.append('personal_phone', personalPhone);
+        formData.append('has_company', signupHasCompany);
+        formData.append('currency', currency);
+        
+        if (profilePictureFile) {
+            formData.append('profile_picture', profilePictureFile);
+        }
+
+        // Company Details (only if not skipped)
+        if (signupHasCompany) {
+            const companyName = document.getElementById('signup-company-name').value || 'My Corporation';
+            const companyEmail = document.getElementById('signup-company-email').value;
+            const companyPhone = document.getElementById('signup-company-phone').value;
+            const companyAddress = document.getElementById('signup-company-address').value;
+            const logoFile = document.getElementById('signup-company-logo').files[0];
+
+            formData.append('company_name', companyName);
+            formData.append('company_email', companyEmail);
+            formData.append('company_phone', companyPhone);
+            formData.append('company_address', companyAddress);
+            if (logoFile) {
+                formData.append('company_logo', logoFile);
+            }
+        } else {
+            formData.append('company_name', '');
+            formData.append('company_email', '');
+            formData.append('company_phone', '');
+            formData.append('company_address', '');
         }
 
         try {
@@ -529,8 +700,11 @@ function setupEventListeners() {
             currentUser = authData.record;
             showToast('Account initialized successfully!', 'success');
             
-            // Clear inputs
+            // Clear inputs and reset wizard state
             document.getElementById('signup-form').reset();
+            showSignupStep(1);
+            signupHasCompany = true;
+            
             showDashboard();
         } catch (error) {
             console.error(error);
@@ -661,32 +835,70 @@ function setupEventListeners() {
     document.getElementById('profile-form').onsubmit = async (e) => {
         e.preventDefault();
         showLoading(true);
-        const companyName = document.getElementById('profile-company-name').value;
-        const email = document.getElementById('profile-company-email').value;
-        const phone = document.getElementById('profile-company-phone').value;
-        const address = document.getElementById('profile-company-address').value;
-        const bankDetails = document.getElementById('profile-bank-details').value;
-        const invoiceNotesTerms = document.getElementById('profile-invoice-notes-terms').value;
+        
+        const personalName = document.getElementById('profile-personal-name').value;
+        const personalEmail = document.getElementById('profile-personal-email').value;
+        const personalPhone = document.getElementById('profile-personal-phone').value;
         const currency = document.getElementById('profile-currency').value;
-        const logoFile = document.getElementById('profile-logo-input').files[0];
+        const avatarFile = document.getElementById('profile-avatar-input').files[0];
+        
+        const hasCompany = document.getElementById('profile-company-toggle').checked;
 
         const formData = new FormData();
-        formData.append('company_name', companyName);
-        formData.append('company_email', email);
-        formData.append('company_phone', phone);
-        formData.append('company_address', address);
-        formData.append('bank_details', bankDetails);
-        formData.append('invoice_notes_terms', invoiceNotesTerms);
+        formData.append('name', personalName);
+        formData.append('personal_email', personalEmail);
+        formData.append('personal_phone', personalPhone);
         formData.append('currency', currency);
+        formData.append('has_company', hasCompany);
 
-        if (logoFile) {
-            formData.append('company_logo', logoFile);
+        if (avatarFile) {
+            formData.append('profile_picture', avatarFile);
+        }
+
+        if (hasCompany) {
+            const companyName = document.getElementById('profile-company-name').value;
+            const companyEmail = document.getElementById('profile-company-email').value;
+            const companyPhone = document.getElementById('profile-company-phone').value;
+            const companyAddress = document.getElementById('profile-company-address').value;
+            const bankDetails = document.getElementById('profile-bank-details').value;
+            const invoiceNotesTerms = document.getElementById('profile-invoice-notes-terms').value;
+            const logoFile = document.getElementById('profile-logo-input').files[0];
+
+            formData.append('company_name', companyName);
+            formData.append('company_email', companyEmail);
+            formData.append('company_phone', companyPhone);
+            formData.append('company_address', companyAddress);
+            formData.append('bank_details', bankDetails);
+            formData.append('invoice_notes_terms', invoiceNotesTerms);
+
+            if (logoFile) {
+                formData.append('company_logo', logoFile);
+            }
+        } else {
+            formData.append('company_name', '');
+            formData.append('company_email', '');
+            formData.append('company_phone', '');
+            formData.append('company_address', '');
+            formData.append('bank_details', '');
+            formData.append('invoice_notes_terms', '');
+            formData.append('company_logo', '');
         }
 
         try {
             const updated = await pb.collection('VRTPOCKET_LOGIN_DATABASE').update(currentUser.id, formData);
             currentUser = updated;
+            
+            // Clear all business records if company features are disabled
+            if (!hasCompany) {
+                try {
+                    await clearAllBusinessData(currentUser.id);
+                } catch (cleanErr) {
+                    console.error("Failed to clean up business data:", cleanErr);
+                }
+            }
+            
             showToast('System settings updated!', 'success');
+            applyCompanyRestrictions(currentUser);
             updateUserHeaderDisplay();
             syncAllData();
         } catch (error) {
@@ -696,6 +908,48 @@ function setupEventListeners() {
             showLoading(false);
         }
     };
+
+    // Profile company toggle change
+    const companyToggle = document.getElementById('profile-company-toggle');
+    if (companyToggle) {
+        companyToggle.onchange = (e) => {
+            if (!e.target.checked) {
+                const confirmed = confirm("are you sure want to disable this feature ? this action will remove all the company data");
+                if (!confirmed) {
+                    // Re-check and abort
+                    e.target.checked = true;
+                    return;
+                }
+            }
+            
+            const container = document.getElementById('profile-company-details-container');
+            if (container) {
+                container.classList.toggle('hidden', !e.target.checked);
+            }
+            const toggleFields = ['profile-company-name', 'profile-company-email', 'profile-company-phone', 'profile-company-address'];
+            toggleFields.forEach(id => {
+                const input = document.getElementById(id);
+                if (input) {
+                    input.required = e.target.checked;
+                }
+            });
+        };
+    }
+
+    // Profile avatar input triggers preview
+    const profileAvatarInput = document.getElementById('profile-avatar-input');
+    if (profileAvatarInput) {
+        profileAvatarInput.onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    document.getElementById('profile-avatar-preview').src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+    }
 
     // Profile logo input triggers preview
     document.getElementById('profile-logo-input').onchange = (e) => {
@@ -810,6 +1064,16 @@ async function syncAllData() {
     
     showLoading(true);
     try {
+        // Refresh local auth state to get latest database properties
+        try {
+            await pb.collection('VRTPOCKET_LOGIN_DATABASE').authRefresh();
+            currentUser = pb.authStore.model;
+        } catch (authErr) {
+            console.error("Auth refresh failed:", authErr);
+        }
+        
+        applyCompanyRestrictions(currentUser);
+        
         const userId = currentUser.id;
         
         // Parallel queries to PocketBase database with user filters
@@ -862,16 +1126,51 @@ async function syncAllData() {
 // Sync profile settings values to profile fields
 function syncProfileFields() {
     if (!currentUser) return;
+    
+    // Personal details
+    document.getElementById('profile-personal-name').value = currentUser.name || '';
+    document.getElementById('profile-personal-email').value = currentUser.personal_email || '';
+    document.getElementById('profile-personal-phone').value = currentUser.personal_phone || '';
+    document.getElementById('profile-currency').value = currentUser.currency || 'USD';
+    
+    if (currentUser.profile_picture) {
+        document.getElementById('profile-avatar-preview').src = pb.files.getUrl(currentUser, currentUser.profile_picture);
+    } else {
+        document.getElementById('profile-avatar-preview').src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%236366f1' d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E";
+    }
+
+    // Company toggle state
+    const hasCompany = !!currentUser.has_company;
+    const toggle = document.getElementById('profile-company-toggle');
+    const container = document.getElementById('profile-company-details-container');
+    
+    if (toggle) {
+        toggle.checked = hasCompany;
+    }
+    if (container) {
+        container.classList.toggle('hidden', !hasCompany);
+        // Make company fields required if company features are enabled
+        const toggleFields = ['profile-company-name', 'profile-company-email', 'profile-company-phone', 'profile-company-address'];
+        toggleFields.forEach(id => {
+            const input = document.getElementById(id);
+            if (input) {
+                input.required = hasCompany;
+            }
+        });
+    }
+
+    // Company details
     document.getElementById('profile-company-name').value = currentUser.company_name || '';
     document.getElementById('profile-company-email').value = currentUser.company_email || '';
     document.getElementById('profile-company-phone').value = currentUser.company_phone || '';
     document.getElementById('profile-company-address').value = currentUser.company_address || '';
     document.getElementById('profile-bank-details').value = currentUser.bank_details || '';
     document.getElementById('profile-invoice-notes-terms').value = currentUser.invoice_notes_terms || '';
-    document.getElementById('profile-currency').value = currentUser.currency || 'USD';
     
     if (currentUser.company_logo) {
         document.getElementById('profile-logo-preview').src = pb.files.getUrl(currentUser, currentUser.company_logo);
+    } else {
+        document.getElementById('profile-logo-preview').src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%236366f1' d='M12 2L2 22h20L12 2z'/%3E%3C/svg%3E";
     }
 }
 
@@ -1968,53 +2267,158 @@ function closeInvoiceCreator() {
     document.getElementById('invoice-builder-container').classList.add('hidden');
 }
 
-function addInvoiceItemRow(desc = '', qty = 1, price = 0) {
+function addInvoiceItemRow(desc = '', qty = 1, price = 0, subItems = []) {
     const container = document.getElementById('invoice-items-rows-container');
-    const rowId = 'row-' + Date.now() + Math.random().toString(36).substr(2, 5);
+    const blockId = 'block-' + Date.now() + Math.random().toString(36).substr(2, 5);
     const total = qty * price;
 
-    const rowHtml = `
-        <div class="invoice-item-row" id="${rowId}">
-            <input type="text" class="item-desc" required placeholder="Consulting Services, Widget development" value="${desc}">
-            <input type="number" class="item-qty" min="1" required value="${qty}">
-            <input type="number" class="item-price" min="0" step="0.01" required value="${price}">
-            <span class="item-total-cell">${formatVal(total)}</span>
-            <button type="button" class="tbl-btn tbl-btn-delete remove-item-row" onclick="removeInvoiceItemRow('${rowId}')"><i class="fa-regular fa-trash-can"></i></button>
+    const blockHtml = `
+        <div class="invoice-item-block" id="${blockId}">
+            <div class="invoice-item-row-header">
+                <input type="text" class="item-desc" required placeholder="Consulting Services, Widget development" value="${desc}">
+                <input type="number" class="item-qty" min="1" required value="${qty}">
+                <input type="number" class="item-price" min="0" step="0.01" required value="${price}">
+                <span class="item-total-cell">${formatVal(total)}</span>
+                <button type="button" class="tbl-btn tbl-btn-delete remove-item-block" onclick="removeInvoiceItemBlock('${blockId}')" title="Delete Item Group"><i class="fa-regular fa-trash-can"></i></button>
+            </div>
+            
+            <div style="display: flex; align-items: center; gap: 0.5rem; padding-left: 1.5rem;">
+                <button type="button" class="btn btn-xs btn-outline btn-add-sub-item" onclick="addInvoiceSubItemRow('${blockId}')" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;"><i class="fa-solid fa-plus"></i> Add Sub-Description</button>
+            </div>
+            
+            <div class="sub-items-container" style="display: flex; flex-direction: column; gap: 0.35rem; padding-left: 1.5rem;">
+                <!-- Sub items will be dynamically appended here -->
+            </div>
         </div>
     `;
-    container.insertAdjacentHTML('beforeend', rowHtml);
+    container.insertAdjacentHTML('beforeend', blockHtml);
     
-    // Hook input events to update math dynamically
-    const row = document.getElementById(rowId);
-    row.querySelector('.item-qty').addEventListener('input', () => recalculateRowTotal(rowId));
-    row.querySelector('.item-price').addEventListener('input', () => recalculateRowTotal(rowId));
+    const block = document.getElementById(blockId);
+    block.querySelector('.item-qty').addEventListener('input', () => recalculateRowTotal(blockId));
+    block.querySelector('.item-price').addEventListener('input', () => recalculateRowTotal(blockId));
+
+    if (Array.isArray(subItems)) {
+        subItems.forEach(sub => {
+            addInvoiceSubItemRow(blockId, sub.desc, sub.qty, sub.price, sub.hasPrice);
+        });
+    }
 }
 
-function removeInvoiceItemRow(rowId) {
-    const row = document.getElementById(rowId);
-    if (row) {
-        row.remove();
+function removeInvoiceItemBlock(blockId) {
+    const block = document.getElementById(blockId);
+    if (block) {
+        block.remove();
         calculateInvoiceTotals();
     }
 }
 
-function recalculateRowTotal(rowId) {
-    const row = document.getElementById(rowId);
-    if (row) {
-        const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
-        const price = parseFloat(row.querySelector('.item-price').value) || 0;
-        const cell = row.querySelector('.item-total-cell');
-        cell.textContent = formatVal(qty * price);
+function addInvoiceSubItemRow(blockId, desc = '', qty = 1, price = 0, hasPrice = true) {
+    const block = document.getElementById(blockId);
+    if (!block) return;
+    const subContainer = block.querySelector('.sub-items-container');
+    const subRowId = 'subrow-' + Date.now() + Math.random().toString(36).substr(2, 5);
+    const subTotal = qty * price;
+
+    const subRowHtml = `
+        <div class="invoice-sub-item-row" id="${subRowId}">
+            <i class="fa-solid fa-turn-up" style="transform: rotate(90deg); margin-right: 0.25rem; color: var(--text-muted); font-size: 0.75rem;"></i>
+            <input type="text" class="sub-item-desc" required placeholder="Sub-description detail..." value="${desc}" style="flex-grow: 1; font-size: 0.85rem; padding: 0.4rem 0.6rem;">
+            
+            <div class="sub-item-price-fields ${hasPrice ? '' : 'hidden'}" style="display: flex; gap: 0.5rem; align-items: center;">
+                <input type="number" class="sub-item-qty" min="1" required value="${qty}" style="width: 60px; font-size: 0.85rem; padding: 0.4rem 0.6rem;">
+                <input type="number" class="sub-item-price" min="0" step="0.01" required value="${price}" style="width: 80px; font-size: 0.85rem; padding: 0.4rem 0.6rem;">
+                <span class="sub-item-total-cell" style="width: 70px; text-align: right; font-weight: 500; font-size: 0.85rem; padding: 0 0.4rem;">${formatVal(subTotal)}</span>
+            </div>
+
+            <div class="sub-item-actions" style="display: flex; gap: 0.25rem; align-items: center;">
+                <button type="button" class="btn btn-xs btn-outline toggle-sub-pricing ${hasPrice ? 'btn-danger-outline' : ''}" onclick="toggleSubItemPricing('${subRowId}')" style="padding: 0.2rem 0.4rem; font-size: 0.7rem;">
+                    ${hasPrice ? '<i class="fa-solid fa-eraser"></i> Remove Price' : '<i class="fa-solid fa-dollar-sign"></i> Add Price'}
+                </button>
+                <button type="button" class="tbl-btn tbl-btn-delete remove-sub-item-row" onclick="removeInvoiceSubItemRow('${subRowId}')" title="Delete Sub-description" style="width: 24px; height: 24px;"><i class="fa-regular fa-trash-can" style="font-size: 0.75rem;"></i></button>
+            </div>
+        </div>
+    `;
+    subContainer.insertAdjacentHTML('beforeend', subRowHtml);
+
+    const subRow = document.getElementById(subRowId);
+    subRow.querySelector('.sub-item-qty').addEventListener('input', () => recalculateRowTotal(blockId));
+    subRow.querySelector('.sub-item-price').addEventListener('input', () => recalculateRowTotal(blockId));
+
+    recalculateRowTotal(blockId);
+}
+
+function removeInvoiceSubItemRow(subRowId) {
+    const subRow = document.getElementById(subRowId);
+    if (subRow) {
+        const blockId = subRow.closest('.invoice-item-block').id;
+        subRow.remove();
+        recalculateRowTotal(blockId);
+    }
+}
+
+function toggleSubItemPricing(subRowId) {
+    const subRow = document.getElementById(subRowId);
+    if (subRow) {
+        const priceFields = subRow.querySelector('.sub-item-price-fields');
+        const btn = subRow.querySelector('.toggle-sub-pricing');
+        const isHidden = priceFields.classList.contains('hidden');
+        
+        if (isHidden) {
+            priceFields.classList.remove('hidden');
+            btn.innerHTML = '<i class="fa-solid fa-eraser"></i> Remove Price';
+            btn.classList.add('btn-danger-outline');
+        } else {
+            priceFields.classList.add('hidden');
+            btn.innerHTML = '<i class="fa-solid fa-dollar-sign"></i> Add Price';
+            btn.classList.remove('btn-danger-outline');
+        }
+        recalculateRowTotal(subRow.closest('.invoice-item-block').id);
+    }
+}
+
+function recalculateRowTotal(blockId) {
+    const block = document.getElementById(blockId);
+    if (block) {
+        const mainQty = parseFloat(block.querySelector('.item-qty').value) || 0;
+        const mainPrice = parseFloat(block.querySelector('.item-price').value) || 0;
+        let itemSubtotal = mainQty * mainPrice;
+
+        block.querySelectorAll('.invoice-sub-item-row').forEach(subRow => {
+            const priceFields = subRow.querySelector('.sub-item-price-fields');
+            const totalCell = subRow.querySelector('.sub-item-total-cell');
+            
+            if (priceFields && !priceFields.classList.contains('hidden')) {
+                const subQty = parseFloat(subRow.querySelector('.sub-item-qty').value) || 0;
+                const subPrice = parseFloat(subRow.querySelector('.sub-item-price').value) || 0;
+                const subTotal = subQty * subPrice;
+                totalCell.textContent = formatVal(subTotal);
+                itemSubtotal += subTotal;
+            } else {
+                totalCell.textContent = formatVal(0);
+            }
+        });
+
+        block.querySelector('.item-total-cell').textContent = formatVal(itemSubtotal);
         calculateInvoiceTotals();
     }
 }
 
 function calculateInvoiceTotals() {
     let subtotal = 0;
-    document.querySelectorAll('.invoice-item-row').forEach(row => {
-        const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
-        const price = parseFloat(row.querySelector('.item-price').value) || 0;
-        subtotal += qty * price;
+    document.querySelectorAll('.invoice-item-block').forEach(block => {
+        const qty = parseFloat(block.querySelector('.item-qty').value) || 0;
+        const price = parseFloat(block.querySelector('.item-price').value) || 0;
+        let blockSum = qty * price;
+        
+        block.querySelectorAll('.invoice-sub-item-row').forEach(subRow => {
+            const priceFields = subRow.querySelector('.sub-item-price-fields');
+            if (priceFields && !priceFields.classList.contains('hidden')) {
+                const subQty = parseFloat(subRow.querySelector('.sub-item-qty').value) || 0;
+                const subPrice = parseFloat(subRow.querySelector('.sub-item-price').value) || 0;
+                blockSum += subQty * subPrice;
+            }
+        });
+        subtotal += blockSum;
     });
 
     const taxRate = parseFloat(document.getElementById('invoice-tax').value) || 0;
@@ -2029,18 +2433,44 @@ function calculateInvoiceTotals() {
     document.getElementById('invoice-summary-total').textContent = formatVal(grandTotal);
 }
 
-// Compile Invoice form items list into array payload
 function getInvoiceItemsPayload() {
     const items = [];
-    document.querySelectorAll('.invoice-item-row').forEach(row => {
-        const desc = row.querySelector('.item-desc').value;
-        const qty = parseFloat(row.querySelector('.item-qty').value) || 1;
-        const price = parseFloat(row.querySelector('.item-price').value) || 0;
+    document.querySelectorAll('.invoice-item-block').forEach(block => {
+        const desc = block.querySelector('.item-desc').value;
+        const qty = parseFloat(block.querySelector('.item-qty').value) || 1;
+        const price = parseFloat(block.querySelector('.item-price').value) || 0;
+        
+        const subItems = [];
+        block.querySelectorAll('.invoice-sub-item-row').forEach(subRow => {
+            const subDesc = subRow.querySelector('.sub-item-desc').value;
+            const priceFields = subRow.querySelector('.sub-item-price-fields');
+            const hasPrice = !priceFields.classList.contains('hidden');
+            
+            let subQty = 1;
+            let subPrice = 0;
+            if (hasPrice) {
+                subQty = parseFloat(subRow.querySelector('.sub-item-qty').value) || 0;
+                subPrice = parseFloat(subRow.querySelector('.sub-item-price').value) || 0;
+            }
+            
+            subItems.push({
+                desc: subDesc,
+                hasPrice,
+                qty: subQty,
+                price: subPrice,
+                total: hasPrice ? (subQty * subPrice) : 0
+            });
+        });
+
+        const subTotalSum = subItems.reduce((acc, it) => acc + it.total, 0);
+        const itemTotal = (qty * price) + subTotalSum;
+
         items.push({
             desc,
             qty,
             price,
-            total: qty * price
+            subItems,
+            total: itemTotal
         });
     });
     return items;
@@ -2219,6 +2649,26 @@ async function viewInvoicePaper(id) {
                     <td class="text-right font-bold">${formatVal(it.total)}</td>
                 </tr>
             `;
+
+            if (Array.isArray(it.subItems)) {
+                it.subItems.forEach(sub => {
+                    const subQtyStr = sub.hasPrice ? `${sub.qty}` : '';
+                    const subPriceStr = sub.hasPrice ? `${formatVal(sub.price)}` : '';
+                    const subTotalStr = sub.hasPrice ? `${formatVal(sub.total)}` : '';
+                    
+                    tableBody.innerHTML += `
+                        <tr class="sub-item-paper-row" style="background: rgba(255, 255, 255, 0.01);">
+                            <td style="padding-left: 2.5rem; color: var(--text-secondary); font-size: 0.85rem;">
+                                <i class="fa-solid fa-turn-up" style="transform: rotate(90deg); margin-right: 0.5rem; color: var(--text-muted); font-size: 0.75rem;"></i>
+                                ${sub.desc}
+                            </td>
+                            <td class="text-right" style="color: var(--text-secondary); font-size: 0.85rem;">${subQtyStr}</td>
+                            <td class="text-right" style="color: var(--text-secondary); font-size: 0.85rem;">${subPriceStr}</td>
+                            <td class="text-right" style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 500;">${subTotalStr}</td>
+                        </tr>
+                    `;
+                });
+            }
         });
 
         // Totals maths
@@ -2626,4 +3076,172 @@ function getExpandedExpenses(expensesPool, startFilter, endFilter) {
         expanded = [...expanded, ...getSubscriptionOccurrences(row, start, end)];
     });
     return expanded;
+}
+
+// ==================== WIZARD & RESTRICTION CONTROLS ====================
+
+// Show specific signup wizard step
+function showSignupStep(step) {
+    signupCurrentStep = step;
+    
+    // Toggle active state on step sections
+    document.getElementById('wizard-step-1').classList.toggle('hidden', step !== 1);
+    document.getElementById('wizard-step-2').classList.toggle('hidden', step !== 2);
+    document.getElementById('wizard-step-3').classList.toggle('hidden', step !== 3);
+    
+    // Update progress fill line
+    const fill = document.getElementById('signup-progress-fill');
+    if (fill) {
+        if (step === 1) fill.style.width = '0%';
+        else if (step === 2) fill.style.width = '50%';
+        else if (step === 3) fill.style.width = '100%';
+    }
+    
+    // Update step indicators active/completed states
+    for (let i = 1; i <= 3; i++) {
+        const ind = document.getElementById(`step-indicator-${i}`);
+        if (ind) {
+            ind.classList.toggle('active', i === step);
+            ind.classList.toggle('completed', i < step);
+        }
+    }
+}
+
+// Form validation helper for wizard steps
+function validateStepInputs(stepContainerId) {
+    const container = document.getElementById(stepContainerId);
+    if (!container) return true;
+    const inputs = container.querySelectorAll('input[required], textarea[required], select[required]');
+    for (const input of inputs) {
+        if (!input.checkValidity()) {
+            input.reportValidity();
+            return false;
+        }
+    }
+    return true;
+}
+
+// Apply company-specific feature restrictions dynamically
+function applyCompanyRestrictions(user) {
+    if (!user) return;
+    
+    const hasCompany = !!user.has_company;
+    
+    // 1. Sidebar Nav links
+    const businessLink = document.querySelector('.nav-link[data-tab="business-tab"]');
+    const invoicesLink = document.querySelector('.nav-link[data-tab="invoices-tab"]');
+    
+    if (businessLink) {
+        businessLink.classList.toggle('disabled', !hasCompany);
+        if (!hasCompany) {
+            businessLink.title = "Company features disabled. Enable in Settings.";
+        } else {
+            businessLink.removeAttribute('title');
+        }
+    }
+    
+    if (invoicesLink) {
+        invoicesLink.classList.toggle('disabled', !hasCompany);
+        if (!hasCompany) {
+            invoicesLink.title = "Company features disabled. Enable in Settings.";
+        } else {
+            invoicesLink.removeAttribute('title');
+        }
+    }
+
+    // Redirect user if they are currently on a restricted tab
+    if (!hasCompany && (currentTab === 'business' || currentTab === 'invoices')) {
+        switchTab('dashboard-tab');
+        showToast('Access restricted. Company features are disabled.', 'warning');
+    }
+    
+    // 2. Dashboard cards: Net Business Value & Invoice Ledger
+    const businessCard = document.getElementById('card-wrapper-business');
+    const invoicesCard = document.getElementById('card-wrapper-invoices');
+    
+    if (businessCard) {
+        businessCard.classList.toggle('disabled', !hasCompany);
+    }
+    if (invoicesCard) {
+        invoicesCard.classList.toggle('disabled', !hasCompany);
+    }
+    
+    // 3. Segment dropdown selector items
+    const businessSegmentBtn = document.querySelector('.segment-menu-item[data-segment="business"]');
+    if (businessSegmentBtn) {
+        businessSegmentBtn.classList.toggle('disabled', !hasCompany);
+    }
+    
+    if (!hasCompany && currentDashboardSegment === 'business') {
+        currentDashboardSegment = 'all';
+        document.querySelectorAll('.segment-menu-item').forEach(item => {
+            item.classList.toggle('active', item.getAttribute('data-segment') === 'all');
+        });
+        const titleMap = {
+            'all': 'Financial Dashboard',
+            'personal': 'Personal Dashboard',
+            'investments': 'Investments Dashboard'
+        };
+        document.getElementById('page-title').textContent = titleMap['all'];
+        renderDashboardStats();
+    }
+    
+    // 4. Reports Engine selector options
+    const reportSegmentSelect = document.getElementById('report-segment');
+    if (reportSegmentSelect) {
+        const optAll = reportSegmentSelect.querySelector('option[value="all"]');
+        const optBusiness = reportSegmentSelect.querySelector('option[value="business"]');
+        
+        if (optAll) optAll.disabled = !hasCompany;
+        if (optBusiness) optBusiness.disabled = !hasCompany;
+        
+        // If hasCompany is false, force report segment to personal
+        if (!hasCompany) {
+            reportSegmentSelect.value = 'personal';
+        }
+    }
+}
+
+// Clear all business finance, business expenses, and invoices in database
+async function clearAllBusinessData(userId) {
+    if (!userId) return;
+    try {
+        // 1. Fetch all business finance records
+        const busFinances = await pb.collection('VRTPOCKET_BUSINESS_FINANCE_DATABASE').getFullList({
+            filter: `user = "${userId}"`
+        }).catch(() => []);
+        
+        // 2. Fetch all business expenses records
+        const busExpenses = await pb.collection('VRTPOCKET_BUSINESS_EXPENSES_DATABASE').getFullList({
+            filter: `user = "${userId}"`
+        }).catch(() => []);
+        
+        // 3. Fetch all invoices records
+        const invoices = await pb.collection('VRTPOCKET_INVOICE_DATABASE').getFullList({
+            filter: `user = "${userId}"`
+        }).catch(() => []);
+        
+        // 4. Batch delete in parallel
+        const deletePromises = [];
+        
+        busFinances.forEach(r => {
+            deletePromises.push(pb.collection('VRTPOCKET_BUSINESS_FINANCE_DATABASE').delete(r.id));
+        });
+        
+        busExpenses.forEach(r => {
+            deletePromises.push(pb.collection('VRTPOCKET_BUSINESS_EXPENSES_DATABASE').delete(r.id));
+        });
+        
+        invoices.forEach(r => {
+            deletePromises.push(pb.collection('VRTPOCKET_INVOICE_DATABASE').delete(r.id));
+        });
+        
+        if (deletePromises.length > 0) {
+            await Promise.all(deletePromises);
+            console.log(`Cleared ${deletePromises.length} business-related records for user ${userId}.`);
+        }
+    } catch (err) {
+        console.error("Error in clearAllBusinessData:", err);
+        throw err;
+    }
 }
