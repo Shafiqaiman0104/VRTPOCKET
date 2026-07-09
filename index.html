@@ -65,33 +65,133 @@
 
             <!-- Signup Form -->
             <form id="signup-form" class="auth-form hidden">
-                <div class="input-group">
-                    <label for="signup-email"><i class="fa-regular fa-envelope"></i> Email Address *</label>
-                    <input type="email" id="signup-email" required placeholder="name@company.com">
-                </div>
-                <div class="input-grid">
-                    <div class="input-group">
-                        <label for="signup-password"><i class="fa-solid fa-lock"></i> Password *</label>
-                        <input type="password" id="signup-password" required placeholder="Min. 8 characters">
+                <!-- Stepper Progress Bar -->
+                <div class="signup-stepper">
+                    <div class="signup-progress-line-fill" id="signup-progress-fill"></div>
+                    <div class="signup-step-indicator active" id="step-indicator-1">
+                        <div class="signup-step-circle">1</div>
+                        <div class="signup-step-text">Personal</div>
                     </div>
-                    <div class="input-group">
-                        <label for="signup-password-confirm"><i class="fa-solid fa-circle-check"></i> Confirm Password *</label>
-                        <input type="password" id="signup-password-confirm" required placeholder="••••••••">
+                    <div class="signup-step-indicator" id="step-indicator-2">
+                        <div class="signup-step-circle">2</div>
+                        <div class="signup-step-text">Company</div>
+                    </div>
+                    <div class="signup-step-indicator" id="step-indicator-3">
+                        <div class="signup-step-circle">3</div>
+                        <div class="signup-step-text">Currency</div>
                     </div>
                 </div>
-                <hr class="form-divider">
-                <div class="input-group">
-                    <label for="signup-company-name"><i class="fa-solid fa-building"></i> Company / Organization Name</label>
-                    <input type="text" id="signup-company-name" placeholder="Acme Corporation">
-                </div>
-                <div class="input-group">
-                    <label for="signup-company-logo"><i class="fa-regular fa-image"></i> Company Logo</label>
-                    <input type="file" id="signup-company-logo" accept="image/*">
-                    <span class="input-help">Format: PNG, JPG, WebP. Used in invoice generation.</span>
-                </div>
-                <div class="input-grid">
+
+                <!-- Wizard Step 1: Personal Details -->
+                <div id="wizard-step-1" class="signup-form-step">
                     <div class="input-group">
-                        <label for="signup-currency"><i class="fa-solid fa-coins"></i> Default Currency</label>
+                        <label for="signup-email"><i class="fa-regular fa-envelope"></i> Email Address *</label>
+                        <input type="email" id="signup-email" required placeholder="name@company.com">
+                    </div>
+                    <div class="input-grid">
+                        <div class="input-group">
+                            <label for="signup-password"><i class="fa-solid fa-lock"></i> Password *</label>
+                            <input type="password" id="signup-password" required placeholder="Min. 8 characters">
+                        </div>
+                        <div class="input-group">
+                            <label for="signup-password-confirm"><i class="fa-solid fa-circle-check"></i> Confirm Password *</label>
+                            <input type="password" id="signup-password-confirm" required placeholder="••••••••">
+                        </div>
+                    </div>
+                    
+                    <div class="settings-section-divider" style="margin: 1rem 0 0.5rem 0;">
+                        <i class="fa-solid fa-user-tag"></i> Personal Details
+                    </div>
+                    
+                    <div class="profile-avatar-upload" style="margin-bottom: 0.5rem; padding: 0.75rem;">
+                        <div class="avatar-preview-box" style="width: 60px; height: 60px; border-radius: var(--radius-sm);">
+                            <img id="signup-avatar-preview" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%236366f1' d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E" alt="Avatar Preview">
+                        </div>
+                        <div class="avatar-upload-info" style="gap: 0.25rem;">
+                            <label for="signup-profile-picture" class="btn btn-xs btn-outline" style="padding: 0.35rem 0.75rem;"><i class="fa-solid fa-upload"></i> Profile Picture</label>
+                            <input type="file" id="signup-profile-picture" accept="image/*" class="hidden">
+                            <span class="text-muted text-sm" style="font-size: 0.7rem;">PNG, JPG or WebP</span>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="signup-name"><i class="fa-solid fa-signature"></i> Full Name *</label>
+                        <input type="text" id="signup-name" required placeholder="John Doe">
+                    </div>
+                    
+                    <div class="input-grid">
+                        <div class="input-group">
+                            <label for="signup-personal-email" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                <span><i class="fa-regular fa-envelope"></i> Personal Email *</span>
+                                <span id="signup-use-same-email" style="font-size: 0.75rem; text-decoration: underline; color: var(--primary); cursor: pointer; font-weight: 500;">(same as above email)</span>
+                            </label>
+                            <input type="email" id="signup-personal-email" required placeholder="john.doe@gmail.com">
+                        </div>
+                        <div class="input-group">
+                            <label for="signup-personal-phone"><i class="fa-solid fa-phone"></i> Contact Phone *</label>
+                            <input type="text" id="signup-personal-phone" required placeholder="+1 555-0199">
+                        </div>
+                    </div>
+                    
+                    <button type="button" class="btn btn-primary btn-block" id="btn-signup-next-1" style="margin-top: 0.5rem;">Next Step <i class="fa-solid fa-arrow-right"></i></button>
+                </div>
+
+                <!-- Wizard Step 2: Company Details -->
+                <div id="wizard-step-2" class="signup-form-step hidden">
+                    <div class="settings-section-divider" style="margin: 0 0 0.5rem 0;">
+                        <i class="fa-solid fa-building"></i> Company / Organization Details
+                    </div>
+                    
+                    <div class="profile-avatar-upload" style="margin-bottom: 0.5rem; padding: 0.75rem;">
+                        <div class="avatar-preview-box" style="width: 60px; height: 60px; border-radius: var(--radius-sm);">
+                            <img id="signup-company-logo-preview" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%236366f1' d='M12 2L2 22h20L12 2z'/%3E%3C/svg%3E" alt="Company Logo Preview">
+                        </div>
+                        <div class="avatar-upload-info" style="gap: 0.25rem;">
+                            <label for="signup-company-logo" class="btn btn-xs btn-outline" style="padding: 0.35rem 0.75rem;"><i class="fa-solid fa-upload"></i> Company Logo</label>
+                            <input type="file" id="signup-company-logo" accept="image/*" class="hidden">
+                            <span class="text-muted text-sm" style="font-size: 0.7rem;">PNG, JPG or WebP</span>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="signup-company-name"><i class="fa-solid fa-building"></i> Company / Organization Name *</label>
+                        <input type="text" id="signup-company-name" placeholder="Acme Corporation">
+                    </div>
+                    
+                    <div class="input-grid">
+                        <div class="input-group">
+                            <label for="signup-company-email" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                <span><i class="fa-regular fa-envelope"></i> Company Email *</span>
+                                <span id="signup-use-same-email-company" style="font-size: 0.75rem; text-decoration: underline; color: var(--primary); cursor: pointer; font-weight: 500;">(same as login)</span>
+                            </label>
+                            <input type="email" id="signup-company-email" placeholder="billing@company.com">
+                        </div>
+                        <div class="input-group">
+                            <label for="signup-company-phone"><i class="fa-solid fa-phone"></i> Company Contact Phone *</label>
+                            <input type="text" id="signup-company-phone" placeholder="+1 555-0199">
+                        </div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="signup-company-address"><i class="fa-solid fa-location-dot"></i> Billing Address *</label>
+                        <textarea id="signup-company-address" rows="2" placeholder="123 Corporate Blvd, Suite 100, City, Country"></textarea>
+                    </div>
+
+                    <div class="signup-step-actions" style="gap: 0.5rem;">
+                        <button type="button" class="btn btn-outline" id="btn-signup-prev-2" title="Go back to Personal details"><i class="fa-solid fa-arrow-left"></i> Back</button>
+                        <button type="button" class="btn btn-outline" id="btn-signup-skip-2">Skip Company</button>
+                        <button type="button" class="btn btn-primary" id="btn-signup-next-2">Next <i class="fa-solid fa-arrow-right"></i></button>
+                    </div>
+                </div>
+
+                <!-- Wizard Step 3: Base Currency -->
+                <div id="wizard-step-3" class="signup-form-step hidden">
+                    <div class="settings-section-divider" style="margin: 0 0 0.5rem 0;">
+                        <i class="fa-solid fa-coins"></i> App Default Currency
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="signup-currency">Base Currency</label>
                         <select id="signup-currency">
                             <option value="USD" selected>USD ($)</option>
                             <option value="MYR">MYR (RM)</option>
@@ -100,17 +200,15 @@
                             <option value="SGD">SGD (S$)</option>
                             <option value="AUD">AUD (A$)</option>
                         </select>
+                        <span class="input-help">Select the base currency for all your financial index values.</span>
                     </div>
-                    <div class="input-group">
-                        <label for="signup-company-phone"><i class="fa-solid fa-phone"></i> Contact Phone</label>
-                        <input type="text" id="signup-company-phone" placeholder="+1 555-0199">
+
+                    <div class="signup-step-actions">
+                        <button type="button" class="btn btn-outline" id="btn-signup-prev-3"><i class="fa-solid fa-arrow-left"></i> Back</button>
+                        <button type="submit" class="btn btn-accent">Complete Sign Up <i class="fa-solid fa-user-plus"></i></button>
                     </div>
                 </div>
-                <div class="input-group">
-                    <label for="signup-company-address"><i class="fa-solid fa-location-dot"></i> Billing Address</label>
-                    <textarea id="signup-company-address" rows="2" placeholder="123 Corporate Blvd, Suite 100, City, Country"></textarea>
-                </div>
-                <button type="submit" class="btn btn-accent btn-block">Sign Up <i class="fa-solid fa-user-plus"></i></button>
+
                 <div class="auth-toggle">
                     Already have an account? <span id="toggle-to-login" class="toggle-link">Return to Sign In</span>
                 </div>
@@ -128,11 +226,20 @@
                     <span class="brand-text">VRTPocket</span>
                     <button class="sidebar-close-btn" id="sidebar-close-btn" title="Close navigation menu">&times;</button>
                 </div>
-                <div class="user-company-badge">
-                    <img id="header-company-logo" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%236366f1' d='M12 2L2 22h20L12 2z'/%3E%3C/svg%3E" alt="Logo" class="company-logo-avatar">
+                <!-- Personal User Badge -->
+                <div class="user-company-badge" id="sidebar-personal-badge">
+                    <img id="header-personal-avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%236366f1' d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E" alt="Personal Avatar" class="company-logo-avatar">
                     <div class="user-company-info">
-                        <div id="header-company-name" class="company-name-text">Loading Co.</div>
-                        <div id="header-user-email" class="user-email-text">user@email.com</div>
+                        <div id="header-personal-name" class="company-name-text">User Name</div>
+                        <div id="header-personal-email" class="user-email-text">user@email.com</div>
+                    </div>
+                </div>
+                <!-- Company Badge (hidden if no company) -->
+                <div class="user-company-badge hidden" id="sidebar-company-badge" style="margin-top: 0.5rem; border-top: 1px dashed var(--border-glass); padding-top: 0.5rem; border-radius: 0;">
+                    <img id="header-company-logo" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%236366f1' d='M12 2L2 22h20L12 2z'/%3E%3C/svg%3E" alt="Company Logo" class="company-logo-avatar">
+                    <div class="user-company-info">
+                        <div id="header-company-name" class="company-name-text">Company Name</div>
+                        <div id="header-company-email" class="user-email-text">company@email.com</div>
                     </div>
                 </div>
             </div>
@@ -900,34 +1007,40 @@
                 <section id="profile-tab" class="tab-pane">
                     <div class="card glass max-width-800">
                         <div class="card-header border-b">
-                            <h4>System Profile & Organization Settings</h4>
+                            <h4>System Profile & Settings</h4>
                         </div>
                         <div class="card-body">
                             <form id="profile-form" class="app-form">
+                                
+                                <!-- SECTION 1: Personal Details -->
+                                <div class="settings-section-divider" style="margin-top: 0;">
+                                    <i class="fa-solid fa-user-tag"></i> Personal Details
+                                </div>
+
                                 <div class="profile-avatar-upload">
                                     <div class="avatar-preview-box">
-                                        <img id="profile-logo-preview" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%236366f1' d='M12 2L2 22h20L12 2z'/%3E%3C/svg%3E" alt="Logo Preview">
+                                        <img id="profile-avatar-preview" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%236366f1' d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E" alt="Avatar Preview">
                                     </div>
                                     <div class="avatar-upload-info">
-                                        <label for="profile-logo-input" class="btn btn-accent"><i class="fa-solid fa-upload"></i> Upload Logo File</label>
-                                        <input type="file" id="profile-logo-input" accept="image/*" class="hidden">
-                                        <p class="text-muted text-sm">Upload PNG, JPG, or WebP. Transparent backgrounds look best on invoices.</p>
+                                        <label for="profile-avatar-input" class="btn btn-accent"><i class="fa-solid fa-upload"></i> Upload Profile Picture</label>
+                                        <input type="file" id="profile-avatar-input" accept="image/*" class="hidden">
+                                        <p class="text-muted text-sm">Upload PNG, JPG, or WebP. This will show on your personal avatar.</p>
                                     </div>
                                 </div>
 
                                 <div class="input-group">
-                                    <label for="profile-company-name">Company Name</label>
-                                    <input type="text" id="profile-company-name" required placeholder="Acme Ltd.">
+                                    <label for="profile-personal-name">Full Name *</label>
+                                    <input type="text" id="profile-personal-name" required placeholder="John Doe">
                                 </div>
 
                                 <div class="input-grid">
                                     <div class="input-group">
-                                        <label for="profile-company-email">Company Email</label>
-                                        <input type="email" id="profile-company-email" placeholder="billing@company.com">
+                                        <label for="profile-personal-email">Personal Email *</label>
+                                        <input type="email" id="profile-personal-email" required placeholder="john.doe@gmail.com">
                                     </div>
                                     <div class="input-group">
-                                        <label for="profile-company-phone">Company Phone</label>
-                                        <input type="text" id="profile-company-phone" placeholder="+1 (555) 012-3456">
+                                        <label for="profile-personal-phone">Contact Phone *</label>
+                                        <input type="text" id="profile-personal-phone" required placeholder="+1 (555) 012-3456">
                                     </div>
                                 </div>
 
@@ -945,22 +1058,68 @@
                                     </div>
                                 </div>
 
-                                <div class="input-group">
-                                    <label for="profile-bank-details"><i class="fa-solid fa-building-columns"></i> Default Bank Details (Auto-fills Payment Details on Invoices)</label>
-                                    <textarea id="profile-bank-details" rows="2" placeholder="Bank Name: ABC Bank&#10;Account Number: 123-456-789&#10;SWIFT/IBAN: ..."></textarea>
+                                <!-- SECTION 2: Company Toggle Switch -->
+                                <div class="switch-container">
+                                    <div class="switch-label-group">
+                                        <span class="switch-title"><i class="fa-solid fa-building"></i> Enable Company Features</span>
+                                        <span class="switch-desc">Unlocks business dashboards, invoices, corporate ledger, and business reports.</span>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox" id="profile-company-toggle">
+                                        <span class="slider"></span>
+                                    </label>
                                 </div>
 
-                                <div class="input-group">
-                                    <label for="profile-invoice-notes-terms"><i class="fa-regular fa-comment-dots"></i> Default Invoice Notes / Terms (Auto-fills Notes / Terms on Invoices)</label>
-                                    <textarea id="profile-invoice-notes-terms" rows="2" placeholder="Terms: Net 30, Thank you for your business!"></textarea>
+                                <!-- SECTION 3: Company Details (Toggleable Container) -->
+                                <div id="profile-company-details-container" class="signup-form-step hidden">
+                                    <div class="settings-section-divider">
+                                        <i class="fa-solid fa-building-circle-check"></i> Company Details & Settings
+                                    </div>
+
+                                    <div class="profile-avatar-upload">
+                                        <div class="avatar-preview-box">
+                                            <img id="profile-logo-preview" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%236366f1' d='M12 2L2 22h20L12 2z'/%3E%3C/svg%3E" alt="Logo Preview">
+                                        </div>
+                                        <div class="avatar-upload-info">
+                                            <label for="profile-logo-input" class="btn btn-outline"><i class="fa-solid fa-upload"></i> Upload Company Logo</label>
+                                            <input type="file" id="profile-logo-input" accept="image/*" class="hidden">
+                                            <p class="text-muted text-sm">Upload PNG, JPG, or WebP. Used in invoice generation.</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="input-group">
+                                        <label for="profile-company-name">Company Name *</label>
+                                        <input type="text" id="profile-company-name" placeholder="Acme Ltd.">
+                                    </div>
+
+                                    <div class="input-grid">
+                                        <div class="input-group">
+                                            <label for="profile-company-email">Company Email *</label>
+                                            <input type="email" id="profile-company-email" placeholder="billing@company.com">
+                                        </div>
+                                        <div class="input-group">
+                                            <label for="profile-company-phone">Company Phone *</label>
+                                            <input type="text" id="profile-company-phone" placeholder="+1 (555) 012-3456">
+                                        </div>
+                                    </div>
+
+                                    <div class="input-group">
+                                        <label for="profile-bank-details"><i class="fa-solid fa-building-columns"></i> Default Bank Details (Auto-fills Payment Details on Invoices)</label>
+                                        <textarea id="profile-bank-details" rows="2" placeholder="Bank Name: ABC Bank&#10;Account Number: 123-456-789&#10;SWIFT/IBAN: ..."></textarea>
+                                    </div>
+
+                                    <div class="input-group">
+                                        <label for="profile-invoice-notes-terms"><i class="fa-regular fa-comment-dots"></i> Default Invoice Notes / Terms (Auto-fills Notes / Terms on Invoices)</label>
+                                        <textarea id="profile-invoice-notes-terms" rows="2" placeholder="Terms: Net 30, Thank you for your business!"></textarea>
+                                    </div>
+
+                                    <div class="input-group">
+                                        <label for="profile-company-address">Billing Address *</label>
+                                        <textarea id="profile-company-address" rows="3" placeholder="Suite 404, Corporate Tower..."></textarea>
+                                    </div>
                                 </div>
 
-                                <div class="input-group">
-                                    <label for="profile-company-address">Billing Address</label>
-                                    <textarea id="profile-company-address" rows="3" placeholder="Suite 404, Corporate Tower..."></textarea>
-                                </div>
-
-                                <button type="submit" class="btn btn-primary">Update Profile Settings <i class="fa-solid fa-circle-check"></i></button>
+                                <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">Update Profile Settings <i class="fa-solid fa-circle-check"></i></button>
                             </form>
                         </div>
                     </div>
