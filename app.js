@@ -20,6 +20,7 @@ let dashboardDateFrom = '';          // e.g. '2026-07-01'
 let dashboardDateTo = '';            // e.g. '2026-07-31'
 let charts = {};
 let currentAutofillContext = '';
+let currentZoom = parseFloat(localStorage.getItem('vrtpocket_zoom')) || 1.0;
 
 // Signup wizard state
 let signupCurrentStep = 1;
@@ -40,6 +41,15 @@ let appData = {
 document.addEventListener('DOMContentLoaded', () => {
     initApp();
     setupEventListeners();
+    
+    // Register PWA Service Worker
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('ServiceWorker registration successful with scope: ', reg.scope))
+                .catch(err => console.log('ServiceWorker registration failed: ', err));
+        });
+    }
 });
 
 // Helper to update brand logo images based on theme
@@ -116,7 +126,24 @@ function formatMonthYearLabel(monthStr) {
 }
 
 // Initialize Application state and check auth
+function applyZoom(zoomVal) {
+    currentZoom = Math.max(0.7, Math.min(1.8, zoomVal)); // bounds: 70% to 180%
+    localStorage.setItem('vrtpocket_zoom', currentZoom);
+    
+    // Apply zoom to document body
+    document.body.style.zoom = currentZoom;
+    
+    // Update display text
+    const zoomText = document.getElementById('zoom-percentage-val');
+    if (zoomText) {
+        zoomText.textContent = `${Math.round(currentZoom * 100)}%`;
+    }
+}
+
 async function initApp() {
+    // Apply stored zoom scale
+    applyZoom(currentZoom);
+
     // Theme toggle initialization (defaults to light mode on first visit)
     const savedTheme = localStorage.getItem('theme');
     const isLight = savedTheme === null || savedTheme === 'light';
@@ -304,7 +331,8 @@ function switchTab(tabId) {
             'investments-tab': 'Investments Portfolio',
             'invoices-tab': 'Corporate Invoices Suite',
             'reports-tab': 'Financial Reports Intelligence',
-            'profile-tab': 'System Settings'
+            'profile-tab': 'System Settings',
+            'display-tab': 'Display Settings'
         };
         document.getElementById('page-title').textContent = titleMap[tabId] || 'Financial Hub';
     }
@@ -608,6 +636,146 @@ function setupEventListeners() {
         showToast('Logged out successfully.', 'info');
         showAuthScreen();
     });
+
+    // --- DISPLAY SETTINGS ---
+    // Fullscreen Mode Toggle
+    const fullscreenToggle = document.getElementById('display-fullscreen-toggle');
+    if (fullscreenToggle) {
+        // Sync toggled state if user enters/exits fullscreen natively (e.g. Esc key)
+        document.addEventListener('fullscreenchange', () => {
+            fullscreenToggle.checked = !!document.fullscreenElement;
+        });
+
+        fullscreenToggle.addEventListener('change', () => {
+            if (fullscreenToggle.checked) {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(err => {
+                        console.error(`Error attempting to enable fullscreen: ${err.message}`);
+                        fullscreenToggle.checked = false;
+                        showToast('Fullscreen mode failed to launch.', 'error');
+                    });
+                }
+            } else {
+                if (document.fullscreenElement) {
+                    document.exitFullscreen();
+                }
+            }
+        });
+    }
+
+    // Zoom Controls
+    const btnZoomIn = document.getElementById('btn-zoom-in');
+    const btnZoomOut = document.getElementById('btn-zoom-out');
+    const btnZoomReset = document.getElementById('btn-zoom-reset');
+    
+    if (btnZoomIn) {
+        btnZoomIn.addEventListener('click', () => {
+            applyZoom(currentZoom + 0.1);
+        });
+    }
+    if (btnZoomOut) {
+        btnZoomOut.addEventListener('click', () => {
+            applyZoom(currentZoom - 0.1);
+        });
+    }
+    if (btnZoomReset) {
+        btnZoomReset.addEventListener('click', () => {
+            applyZoom(1.0);
+        });
+    }
+
+    // --- FETCH PREVIOUS INVOICE ---
+    const fetchPrevInvoiceBtn = document.getElementById('btn-invoice-fetch-prev');
+    if (fetchPrevInvoiceBtn) {
+        fetchPrevInvoiceBtn.addEventListener('click', openInvoiceFetchModal);
+    }
+
+    const closeInvoiceFetchBtn = document.getElementById('close-invoice-fetch-modal');
+    if (closeInvoiceFetchBtn) {
+        closeInvoiceFetchBtn.addEventListener('click', () => {
+            document.getElementById('invoice-fetch-modal').classList.add('hidden');
+        });
+    }
+
+    const cancelInvoiceFetchBtn = document.getElementById('btn-close-invoice-fetch-form');
+    if (cancelInvoiceFetchBtn) {
+        cancelInvoiceFetchBtn.addEventListener('click', () => {
+            document.getElementById('invoice-fetch-modal').classList.add('hidden');
+        });
+    }
+
+    const invoiceSearchInput = document.getElementById('invoice-fetch-search-input');
+    if (invoiceSearchInput) {
+        invoiceSearchInput.addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase().trim();
+            const filtered = appData.invoices.filter(inv => {
+                const clientMatch = inv.client_name ? inv.client_name.toLowerCase().includes(term) : false;
+                const numberMatch = inv.invoice_number ? inv.invoice_number.toLowerCase().includes(term) : false;
+                return clientMatch || numberMatch;
+            });
+            renderFetchInvoiceList(filtered);
+        });
+    }
+
+    // --- QUICK PREVIEW MODAL ---
+    const closePreviewPopupBtn = document.getElementById('close-invoice-preview-popup-modal');
+    if (closePreviewPopupBtn) {
+        closePreviewPopupBtn.addEventListener('click', () => {
+            document.getElementById('invoice-preview-popup-modal').classList.add('hidden');
+        });
+    }
+
+    const closePreviewPopupBtn2 = document.getElementById('btn-close-invoice-preview-popup-modal');
+    if (closePreviewPopupBtn2) {
+        closePreviewPopupBtn2.addEventListener('click', () => {
+            document.getElementById('invoice-preview-popup-modal').classList.add('hidden');
+        });
+    }
+
+    const selectFromPreviewBtn = document.getElementById('btn-select-invoice-from-preview-popup');
+    if (selectFromPreviewBtn) {
+        selectFromPreviewBtn.addEventListener('click', () => {
+            if (currentPreviewInvoiceId) {
+                autofillInvoiceFromTemplate(currentPreviewInvoiceId);
+                document.getElementById('invoice-preview-popup-modal').classList.add('hidden');
+            }
+        });
+    }
+
+    // --- FETCH CLIENT DATA ---
+    const fetchClientBtn = document.getElementById('btn-invoice-fetch-client');
+    if (fetchClientBtn) {
+        fetchClientBtn.addEventListener('click', openInvoiceClientFetchModal);
+    }
+
+    const closeInvoiceClientFetchBtn = document.getElementById('close-invoice-client-fetch-modal');
+    if (closeInvoiceClientFetchBtn) {
+        closeInvoiceClientFetchBtn.addEventListener('click', () => {
+            document.getElementById('invoice-client-fetch-modal').classList.add('hidden');
+        });
+    }
+
+    const cancelInvoiceClientFetchBtn = document.getElementById('btn-close-invoice-client-fetch-form');
+    if (cancelInvoiceClientFetchBtn) {
+        cancelInvoiceClientFetchBtn.addEventListener('click', () => {
+            document.getElementById('invoice-client-fetch-modal').classList.add('hidden');
+        });
+    }
+
+    const clientSearchInput = document.getElementById('invoice-client-search-input');
+    if (clientSearchInput) {
+        clientSearchInput.addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase().trim();
+            const allClients = getDeduplicatedClients();
+            const filtered = allClients.filter(c => {
+                const nameMatch = c.name ? c.name.toLowerCase().includes(term) : false;
+                const emailMatch = c.email ? c.email.toLowerCase().includes(term) : false;
+                const addrMatch = c.address ? c.address.toLowerCase().includes(term) : false;
+                return nameMatch || emailMatch || addrMatch;
+            });
+            renderFetchClientList(filtered);
+        });
+    }
 
     // --- FORM SUBMISSIONS ---
     
@@ -2322,11 +2490,11 @@ function addInvoiceSubItemRow(blockId, desc = '', qty = 1, price = 0, hasPrice =
     const subRowHtml = `
         <div class="invoice-sub-item-row" id="${subRowId}">
             <i class="fa-solid fa-turn-up" style="transform: rotate(90deg); margin-right: 0.25rem; color: var(--text-muted); font-size: 0.75rem;"></i>
-            <input type="text" class="sub-item-desc" required placeholder="Sub-description detail..." value="${desc}" style="flex-grow: 1; font-size: 0.85rem; padding: 0.4rem 0.6rem;">
+            <input type="text" class="sub-item-desc" required placeholder="Sub-description detail..." value="${desc}" style="flex-grow: 1; font-size: 0.85rem; padding: 0.2rem 0.4rem;">
             
             <div class="sub-item-price-fields ${hasPrice ? '' : 'hidden'}" style="display: flex; gap: 0.5rem; align-items: center;">
-                <input type="number" class="sub-item-qty" min="1" required value="${qty}" style="width: 60px; font-size: 0.85rem; padding: 0.4rem 0.6rem;">
-                <input type="number" class="sub-item-price" min="0" step="0.01" required value="${price}" style="width: 80px; font-size: 0.85rem; padding: 0.4rem 0.6rem;">
+                <input type="number" class="sub-item-qty" min="1" required value="${qty}" style="width: 60px; font-size: 0.85rem; padding: 0.2rem 0.4rem;">
+                <input type="number" class="sub-item-price" min="0" step="0.01" required value="${price}" style="width: 80px; font-size: 0.85rem; padding: 0.2rem 0.4rem;">
                 <span class="sub-item-total-cell" style="width: 70px; text-align: right; font-weight: 500; font-size: 0.85rem; padding: 0 0.4rem;">${formatVal(subTotal)}</span>
             </div>
 
@@ -2392,7 +2560,6 @@ function recalculateRowTotal(blockId) {
                 const subPrice = parseFloat(subRow.querySelector('.sub-item-price').value) || 0;
                 const subTotal = subQty * subPrice;
                 totalCell.textContent = formatVal(subTotal);
-                itemSubtotal += subTotal;
             } else {
                 totalCell.textContent = formatVal(0);
             }
@@ -2579,7 +2746,7 @@ async function editInvoiceRecord(id) {
             addInvoiceItemRow();
         } else {
             items.forEach(it => {
-                addInvoiceItemRow(it.desc, it.qty, it.price);
+                addInvoiceItemRow(it.desc, it.qty, it.price, it.subItems);
             });
         }
 
@@ -2640,13 +2807,16 @@ async function viewInvoicePaper(id) {
         let subtotal = 0;
         
         items.forEach(it => {
-            subtotal += it.total;
+            const displayTotal = it.qty * it.price;
+            const subTotalSum = Array.isArray(it.subItems) ? it.subItems.reduce((acc, sub) => acc + (sub.total || 0), 0) : 0;
+            const actualTotal = displayTotal + subTotalSum;
+            subtotal += actualTotal;
             tableBody.innerHTML += `
                 <tr>
                     <td><strong>${it.desc}</strong></td>
                     <td class="text-right">${it.qty}</td>
                     <td class="text-right">${formatVal(it.price)}</td>
-                    <td class="text-right font-bold">${formatVal(it.total)}</td>
+                    <td class="text-right font-bold">${formatVal(displayTotal)}</td>
                 </tr>
             `;
 
@@ -2676,7 +2846,7 @@ async function viewInvoicePaper(id) {
         document.getElementById('invoice-paper-subtotal').textContent = formatVal(subtotal);
         document.getElementById('invoice-paper-tax').textContent = `${formatVal(taxVal)} (${inv.tax_rate}%)`;
         document.getElementById('invoice-paper-discount').textContent = `-${formatVal(inv.discount)}`;
-        document.getElementById('invoice-paper-total').textContent = formatVal(inv.total_amount);
+        document.getElementById('invoice-paper-total').textContent = formatVal(subtotal + taxVal - inv.discount);
 
         // Memo and payment details
         let notesText = inv.notes || '';
@@ -2725,6 +2895,27 @@ function compileReport(e) {
     
     const startDateVal = document.getElementById('report-start-date').value;
     const endDateVal = document.getElementById('report-end-date').value;
+    
+    if (!startDateVal || !endDateVal) {
+        const distBody = document.getElementById('report-distribution-body');
+        const txBody = document.getElementById('report-transactions-body');
+        if (distBody) distBody.innerHTML = `<tr><td colspan="4" class="text-center text-muted">Please select a date range and compile.</td></tr>`;
+        if (txBody) txBody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">Please select a date range and compile.</td></tr>`;
+        
+        document.getElementById('report-total-income').textContent = formatVal(0);
+        document.getElementById('report-total-expenses').textContent = formatVal(0);
+        document.getElementById('report-net-surplus').textContent = formatVal(0);
+        document.getElementById('report-investment-summary').textContent = `${formatVal(0)} (0.00%)`;
+        document.getElementById('report-period-text').textContent = 'No Date Range Selected';
+        
+        const reportDoc = document.getElementById('report-document');
+        if (reportDoc) reportDoc.classList.add('hidden');
+        return;
+    }
+    
+    const reportDoc = document.getElementById('report-document');
+    if (reportDoc) reportDoc.classList.remove('hidden');
+    
     const scope = document.getElementById('report-segment').value;
 
     const start = startDateVal ? new Date(startDateVal) : new Date(0); // far past
@@ -3244,4 +3435,290 @@ async function clearAllBusinessData(userId) {
         console.error("Error in clearAllBusinessData:", err);
         throw err;
     }
+}
+
+// ==================== FETCH INVOICE TEMPLATE SYSTEM ====================
+function openInvoiceFetchModal() {
+    const listBody = document.getElementById('invoice-fetch-list-body');
+    const searchInput = document.getElementById('invoice-fetch-search-input');
+    
+    if (listBody && searchInput) {
+        listBody.innerHTML = '';
+        searchInput.value = '';
+        renderFetchInvoiceList(appData.invoices);
+        document.getElementById('invoice-fetch-modal').classList.remove('hidden');
+    }
+}
+
+function renderFetchInvoiceList(invoicesList) {
+    const listBody = document.getElementById('invoice-fetch-list-body');
+    if (!listBody) return;
+    listBody.innerHTML = '';
+    
+    if (!invoicesList || invoicesList.length === 0) {
+        listBody.innerHTML = `<tr><td colspan="4" class="text-center text-muted" style="padding: 1rem;">No previous invoices found.</td></tr>`;
+        return;
+    }
+    
+    invoicesList.forEach(inv => {
+        listBody.innerHTML += `
+            <tr style="cursor: pointer;" onclick="previewInvoicePopup('${inv.id}')">
+                <td><strong>${inv.invoice_number}</strong></td>
+                <td>${inv.client_name}</td>
+                <td class="text-right font-bold">${formatVal(inv.total_amount)}</td>
+                <td class="text-right" style="display: flex; gap: 0.25rem; justify-content: flex-end; align-items: center; border: none;">
+                    <button type="button" class="btn btn-xs btn-outline" onclick="event.stopPropagation(); previewInvoicePopup('${inv.id}')" style="padding: 0.2rem 0.4rem; font-size: 0.75rem;"><i class="fa-regular fa-eye"></i> View</button>
+                    <button type="button" class="btn btn-xs btn-primary" onclick="event.stopPropagation(); autofillInvoiceFromTemplate('${inv.id}')" style="padding: 0.2rem 0.4rem; font-size: 0.75rem;">Select</button>
+                </td>
+            </tr>
+        `;
+    });
+}
+
+function autofillInvoiceFromTemplate(id) {
+    const inv = appData.invoices.find(item => item.id === id);
+    if (!inv) return;
+    
+    // Populate client details
+    document.getElementById('invoice-client-name').value = inv.client_name || '';
+    document.getElementById('invoice-client-email').value = inv.client_email || '';
+    document.getElementById('invoice-client-address').value = inv.client_address || '';
+    
+    // Populate settings (do not overwrite status)
+    document.getElementById('invoice-tax').value = inv.tax_rate !== undefined ? inv.tax_rate : 0;
+    document.getElementById('invoice-discount').value = inv.discount !== undefined ? inv.discount : 0;
+    
+    // Extract notes and payment details (splitting if delimiter is found)
+    let notesText = inv.notes || '';
+    let paymentDetailsText = inv.payment_details || '';
+    const delimiter = "\n---PAYMENT-DETAILS---\n";
+    if (notesText.includes(delimiter)) {
+        const parts = notesText.split(delimiter);
+        notesText = parts[0] || '';
+        paymentDetailsText = parts[1] || '';
+    }
+    
+    document.getElementById('invoice-notes').value = notesText;
+    document.getElementById('invoice-payment-details').value = paymentDetailsText || inv.payment_details || '';
+    
+    // Load dynamic items
+    const container = document.getElementById('invoice-items-rows-container');
+    if (container) {
+        container.innerHTML = '';
+        
+        const items = Array.isArray(inv.items) ? inv.items : [];
+        if (items.length === 0) {
+            addInvoiceItemRow();
+        } else {
+            items.forEach(it => {
+                addInvoiceItemRow(it.desc, it.qty, it.price, it.subItems);
+            });
+        }
+    }
+    
+    // Recalculate totals
+    calculateInvoiceTotals();
+    
+    // Close modal
+    document.getElementById('invoice-fetch-modal').classList.add('hidden');
+    showToast(`Autofilled data from Invoice ${inv.invoice_number}!`, 'success');
+}
+
+let currentPreviewInvoiceId = null;
+
+function previewInvoicePopup(id) {
+    const inv = appData.invoices.find(item => item.id === id);
+    if (!inv) return;
+    
+    currentPreviewInvoiceId = id;
+    
+    // Company Info
+    document.getElementById('popup-invoice-paper-company-name').textContent = currentUser.company_name || 'My Organization';
+    document.getElementById('popup-invoice-paper-company-address').textContent = currentUser.company_address || '';
+    document.getElementById('popup-invoice-paper-company-contact').textContent = `Tel: ${currentUser.company_phone || 'N/A'} | Email: ${currentUser.company_email || currentUser.email}`;
+
+    // Set Company Logo
+    const printLogo = document.getElementById('popup-invoice-paper-logo');
+    if (printLogo) {
+        if (currentUser.company_logo) {
+            printLogo.src = pb.files.getUrl(currentUser, currentUser.company_logo);
+            printLogo.classList.remove('hidden');
+        } else {
+            printLogo.classList.add('hidden');
+        }
+    }
+
+    // Invoice Meta
+    document.getElementById('popup-invoice-paper-number').textContent = inv.invoice_number;
+    document.getElementById('popup-invoice-paper-issue-date').textContent = formatDateToDMY(inv.issue_date);
+    document.getElementById('popup-invoice-paper-due-date').textContent = formatDateToDMY(inv.due_date);
+    
+    const statusBadge = document.getElementById('popup-invoice-paper-status');
+    if (statusBadge) {
+        statusBadge.textContent = inv.status;
+        statusBadge.className = `badge status-${inv.status.toLowerCase()}`;
+    }
+
+    // Client info
+    document.getElementById('popup-invoice-paper-client-name').textContent = inv.client_name;
+    document.getElementById('popup-invoice-paper-client-address').textContent = inv.client_address || '';
+    document.getElementById('popup-invoice-paper-client-email').textContent = inv.client_email || '';
+
+    // Fill Items Table
+    const tableBody = document.getElementById('popup-invoice-paper-items-list');
+    if (tableBody) {
+        tableBody.innerHTML = '';
+        
+        const items = Array.isArray(inv.items) ? inv.items : [];
+        let subtotal = 0;
+        
+        items.forEach(it => {
+            const displayTotal = it.qty * it.price;
+            const subTotalSum = Array.isArray(it.subItems) ? it.subItems.reduce((acc, sub) => acc + (sub.total || 0), 0) : 0;
+            const actualTotal = displayTotal + subTotalSum;
+            subtotal += actualTotal;
+            
+            tableBody.innerHTML += `
+                <tr style="border-bottom: 1px dashed var(--border-glass);">
+                    <td style="padding: 0.5rem 0.25rem;"><strong>${it.desc}</strong></td>
+                    <td class="text-right" style="padding: 0.5rem 0.25rem; text-align: right;">${it.qty}</td>
+                    <td class="text-right" style="padding: 0.5rem 0.25rem; text-align: right;">${formatVal(it.price)}</td>
+                    <td class="text-right font-bold" style="padding: 0.5rem 0.25rem; text-align: right; font-weight: 700;">${formatVal(displayTotal)}</td>
+                </tr>
+            `;
+
+            if (Array.isArray(it.subItems)) {
+                it.subItems.forEach(sub => {
+                    const subQtyStr = sub.hasPrice ? `${sub.qty}` : '';
+                    const subPriceStr = sub.hasPrice ? `${formatVal(sub.price)}` : '';
+                    const subTotalStr = sub.hasPrice ? `${formatVal(sub.total)}` : '';
+                    
+                    tableBody.innerHTML += `
+                        <tr class="sub-item-paper-row" style="background: rgba(255, 255, 255, 0.01);">
+                            <td style="padding: 0.35rem 0.25rem 0.35rem 1.5rem; color: var(--text-secondary); font-size: 0.8rem;">
+                                <i class="fa-solid fa-turn-up" style="transform: rotate(90deg); margin-right: 0.5rem; color: var(--text-muted); font-size: 0.7rem;"></i>
+                                ${sub.desc}
+                            </td>
+                            <td class="text-right" style="padding: 0.35rem 0.25rem; text-align: right; color: var(--text-secondary); font-size: 0.8rem;">${subQtyStr}</td>
+                            <td class="text-right" style="padding: 0.35rem 0.25rem; text-align: right; color: var(--text-secondary); font-size: 0.8rem;">${subPriceStr}</td>
+                            <td class="text-right" style="padding: 0.35rem 0.25rem; text-align: right; color: var(--text-secondary); font-size: 0.8rem; font-weight: 500;">${subTotalStr}</td>
+                        </tr>
+                    `;
+                });
+            }
+        });
+
+        // Totals maths
+        const taxVal = subtotal * (inv.tax_rate / 100);
+        document.getElementById('popup-invoice-paper-subtotal').textContent = formatVal(subtotal);
+        document.getElementById('popup-invoice-paper-tax').textContent = `${formatVal(taxVal)} (${inv.tax_rate}%)`;
+        document.getElementById('popup-invoice-paper-discount').textContent = `-${formatVal(inv.discount)}`;
+        document.getElementById('popup-invoice-paper-total').textContent = formatVal(subtotal + taxVal - inv.discount);
+    }
+
+    // Memo and payment details
+    let notesText = inv.notes || '';
+    let paymentDetailsText = inv.payment_details || '';
+
+    const delimiter = "\n---PAYMENT-DETAILS---\n";
+    if (notesText.includes(delimiter)) {
+        const parts = notesText.split(delimiter);
+        notesText = parts[0] || '';
+        paymentDetailsText = parts[1] || '';
+    }
+
+    const pDetailsText = document.getElementById('popup-invoice-paper-payment-details-text');
+    const pDetailsBox = document.getElementById('popup-invoice-paper-payment-details-box');
+    
+    if (pDetailsText && pDetailsBox) {
+        if (paymentDetailsText && paymentDetailsText.trim() !== '') {
+            pDetailsText.textContent = paymentDetailsText;
+            pDetailsBox.classList.remove('hidden');
+        } else {
+            pDetailsText.textContent = '';
+            pDetailsBox.classList.add('hidden');
+        }
+    }
+
+    const notesTextBox = document.getElementById('popup-invoice-paper-notes-text');
+    if (notesTextBox) {
+        notesTextBox.textContent = notesText || 'Thank you for your business!';
+    }
+
+    // Show popup modal
+    document.getElementById('invoice-preview-popup-modal').classList.remove('hidden');
+}
+
+// ==================== FETCH CLIENT DATA SYSTEM ====================
+function getDeduplicatedClients() {
+    const clientsMap = {};
+    appData.invoices.forEach(inv => {
+        const name = (inv.client_name || '').trim();
+        const email = (inv.client_email || '').trim();
+        const address = (inv.client_address || '').trim();
+        
+        if (!name) return;
+        
+        const key = `${name.toLowerCase()}||${email.toLowerCase()}||${address.toLowerCase()}`;
+        
+        if (!clientsMap[key]) {
+            clientsMap[key] = {
+                name: inv.client_name,
+                email: inv.client_email || '',
+                address: inv.client_address || ''
+            };
+        }
+    });
+    return Object.values(clientsMap);
+}
+
+function openInvoiceClientFetchModal() {
+    const listBody = document.getElementById('invoice-client-fetch-list-body');
+    const searchInput = document.getElementById('invoice-client-search-input');
+    
+    if (listBody && searchInput) {
+        listBody.innerHTML = '';
+        searchInput.value = '';
+        const clients = getDeduplicatedClients();
+        renderFetchClientList(clients);
+        document.getElementById('invoice-client-fetch-modal').classList.remove('hidden');
+    }
+}
+
+function renderFetchClientList(clientsList) {
+    const listBody = document.getElementById('invoice-client-fetch-list-body');
+    if (!listBody) return;
+    listBody.innerHTML = '';
+    
+    if (!clientsList || clientsList.length === 0) {
+        listBody.innerHTML = `<tr><td colspan="4" class="text-center text-muted" style="padding: 1rem;">No clients found.</td></tr>`;
+        return;
+    }
+    
+    clientsList.forEach((client, idx) => {
+        listBody.innerHTML += `
+            <tr style="cursor: pointer;" onclick="selectClientFromTemplate(${idx})">
+                <td><strong>${client.name}</strong></td>
+                <td>${client.email || 'N/A'}</td>
+                <td style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${client.address || 'N/A'}</td>
+                <td class="text-right">
+                    <button type="button" class="btn btn-xs btn-primary" onclick="event.stopPropagation(); selectClientFromTemplate(${idx})" style="padding: 0.2rem 0.4rem; font-size: 0.75rem;">Select</button>
+                </td>
+            </tr>
+        `;
+    });
+    
+    window.currentClientFetchPool = clientsList;
+}
+
+function selectClientFromTemplate(index) {
+    if (!window.currentClientFetchPool || !window.currentClientFetchPool[index]) return;
+    const client = window.currentClientFetchPool[index];
+    
+    document.getElementById('invoice-client-name').value = client.name;
+    document.getElementById('invoice-client-email').value = client.email;
+    document.getElementById('invoice-client-address').value = client.address;
+    
+    document.getElementById('invoice-client-fetch-modal').classList.add('hidden');
+    showToast(`Client ${client.name} loaded successfully!`, 'success');
 }
