@@ -4,6 +4,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VRTPocket - Advanced Wealth Management Platform</title>
+
+    <!-- SEO and Metadata -->
+    <meta name="description" content="VRTPocket is an advanced wealth management platform designed to manage personal and business operations, generate invoices, track investment portfolios, and compile summary statements.">
+    <meta name="keywords" content="wealth management, invoice builder, dynamic invoices, personal finance manager, investment tracker, ledger, business expenses, cash flow generator">
+    <meta name="author" content="Venture Rush Tech">
+    <meta name="theme-color" content="#4f46e5">
+
+    <!-- Open Graph (Facebook, LinkedIn) -->
+    <meta property="og:title" content="VRTPocket - Advanced Wealth Management Platform">
+    <meta property="og:description" content="Manage your personal, business, and investment finances in one sleek, secure dashboard. Generates invoices and dynamic cash flow summaries.">
+    <meta property="og:image" content="https://vrtpocket.venturerushtech.com/favicon.ico">
+    <meta property="og:url" content="https://vrtpocket.venturerushtech.com/">
+    <meta property="og:type" content="website">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="VRTPocket - Advanced Wealth Management Platform">
+    <meta name="twitter:description" content="Manage your personal, business, and investment finances in one sleek, secure dashboard. Generates invoices and dynamic cash flow summaries.">
+    <meta name="twitter:image" content="https://vrtpocket.venturerushtech.com/favicon.ico">
+
+    <!-- PWA Capabilities -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="apple-touch-icon" href="favicon.ico">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -261,12 +287,15 @@
                 <a href="#invoices" class="nav-link" data-tab="invoices-tab">
                     <i class="fa-solid fa-file-invoice-dollar"></i> <span>Invoice Suite</span>
                 </a>
-                <div class="nav-section-title">Intelligence</div>
                 <a href="#reports" class="nav-link" data-tab="reports-tab">
                     <i class="fa-solid fa-file-shield"></i> <span>Reports Engine</span>
                 </a>
+                <div class="nav-section-title">Settings</div>
                 <a href="#profile" class="nav-link" data-tab="profile-tab">
                     <i class="fa-solid fa-sliders"></i> <span>System Settings</span>
+                </a>
+                <a href="#display" class="nav-link" data-tab="display-tab">
+                    <i class="fa-solid fa-desktop"></i> <span>Display Settings</span>
                 </a>
             </nav>
 
@@ -693,7 +722,10 @@
                     <!-- Invoice Builder / Editor (Hidden initially) -->
                     <div id="invoice-builder-container" class="card glass hidden">
                         <div class="card-header border-b flex-space-between">
-                            <h4 id="invoice-builder-title">Create Dynamic Invoice</h4>
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <h4 id="invoice-builder-title">Create Dynamic Invoice</h4>
+                                <button type="button" class="btn btn-xs btn-accent" id="btn-invoice-fetch-prev" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; border-radius: var(--radius-sm);"><i class="fa-solid fa-cloud-arrow-down"></i> Fetch Prev Invoice</button>
+                            </div>
                             <button class="btn btn-outline btn-sm" id="btn-invoice-back"><i class="fa-solid fa-arrow-left"></i> Back to Registry</button>
                         </div>
                         <div class="card-body">
@@ -718,7 +750,10 @@
                                 <div class="layout-grid-2">
                                     <!-- Client info -->
                                     <div class="invoice-box-sub glass-dark">
-                                        <h5>Client Details</h5>
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                                            <h5 style="margin: 0;">Client Details</h5>
+                                            <button type="button" class="btn btn-xs btn-accent" id="btn-invoice-fetch-client" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; border-radius: var(--radius-sm);"><i class="fa-solid fa-user-tag"></i> Fetch Client Data</button>
+                                        </div>
                                         <div class="input-group">
                                             <label for="invoice-client-name">Client Name *</label>
                                             <input type="text" id="invoice-client-name" required placeholder="Customer Corp Inc">
@@ -896,12 +931,12 @@
                             <form id="report-filter-form" class="app-form">
                                 <div class="layout-grid-3">
                                     <div class="input-group">
-                                        <label for="report-start-date">Start Date</label>
-                                        <input type="date" id="report-start-date">
+                                        <label for="report-start-date">Start Date *</label>
+                                        <input type="date" id="report-start-date" required>
                                     </div>
                                     <div class="input-group">
-                                        <label for="report-end-date">End Date</label>
-                                        <input type="date" id="report-end-date">
+                                        <label for="report-end-date">End Date *</label>
+                                        <input type="date" id="report-end-date" required>
                                     </div>
                                     <div class="input-group">
                                         <label for="report-segment">Scope</label>
@@ -921,7 +956,7 @@
                     </div>
 
                     <!-- Printable Report Sheet -->
-                    <div id="report-document" class="report-document glass">
+                    <div id="report-document" class="report-document glass hidden">
                         <!-- Cover Header -->
                         <div class="report-doc-header">
                             <div class="brand">
@@ -1121,6 +1156,45 @@
 
                                 <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">Update Profile Settings <i class="fa-solid fa-circle-check"></i></button>
                             </form>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ==================== TAB: DISPLAY SETTINGS ==================== -->
+                <section id="display-tab" class="tab-pane">
+                    <div class="card glass max-width-800">
+                        <div class="card-header border-b">
+                            <h4>Display & Layout Settings</h4>
+                        </div>
+                        <div class="card-body">
+                            <!-- Full Screen Option -->
+                            <div class="switch-container" style="display: flex; justify-content: space-between; align-items: center;">
+                                <div class="switch-label-group">
+                                    <span class="switch-title" style="display: flex; align-items: center; gap: 0.5rem; font-weight: 600; color: var(--text-primary);"><i class="fa-solid fa-expand"></i> Enable Full Screen Mode</span>
+                                    <span class="switch-desc" style="display: block; font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">Maximize the workspace to fill the entire monitor.</span>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="display-fullscreen-toggle">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+
+                            <!-- Page Zoom Option -->
+                            <div class="settings-section-divider" style="margin-top: 2rem;">
+                                <i class="fa-solid fa-magnifying-glass-plus"></i> Workspace Zoom Controls
+                            </div>
+                            <div class="zoom-controls-container" style="display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; background: rgba(255, 255, 255, 0.01); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-glass);">
+                                <div class="zoom-info">
+                                    <span class="switch-title" style="display: block; font-weight: 600; color: var(--text-primary);">Adjust Zoom Scale</span>
+                                    <span class="switch-desc" style="display: block; font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">Adjust scaling of text and UI blocks.</span>
+                                </div>
+                                <div class="zoom-actions" style="display: flex; align-items: center; gap: 1rem;">
+                                    <button type="button" class="btn btn-outline btn-sm" id="btn-zoom-out" title="Zoom Out" style="width: 36px; height: 36px; padding: 0; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-minus"></i></button>
+                                    <span id="zoom-percentage-val" class="font-bold text-lg" style="min-width: 60px; text-align: center; font-size: 1.1rem; color: var(--text-primary);">100%</span>
+                                    <button type="button" class="btn btn-outline btn-sm" id="btn-zoom-in" title="Zoom In" style="width: 36px; height: 36px; padding: 0; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-plus"></i></button>
+                                    <button type="button" class="btn btn-outline btn-accent btn-sm" id="btn-zoom-reset" style="padding: 0.4rem 1rem;">Reset</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -1574,6 +1648,149 @@
                         <i class="fa-solid fa-chevron-left"></i> Back
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fetch Previous Invoice Modal -->
+    <div id="invoice-fetch-modal" class="modal-overlay hidden" style="z-index: 2100;">
+        <div class="modal-card glass" style="max-width: 600px;">
+            <div class="modal-header">
+                <h4>Fetch Previous Invoice Data</h4>
+                <button type="button" class="btn-close" id="close-invoice-fetch-modal">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 1rem; display: flex; flex-direction: column; gap: 1rem;">
+                <p class="text-muted text-sm" style="font-size: 0.85rem; margin: 0;">Select a previous invoice to autofill the form. This will import client details, line items, and payment details. <strong>Invoice Number, Issue Date, and Due Date will NOT be overwritten.</strong></p>
+                <div class="input-group" style="margin: 0;">
+                    <input type="text" id="invoice-fetch-search-input" placeholder="Search by Client Name or Invoice Number..." style="padding: 0.5rem; width: 100%; font-size: 0.9rem;">
+                </div>
+                <div style="max-height: 250px; overflow-y: auto; border: 1px solid var(--border-glass); border-radius: var(--radius-sm); background: var(--bg-glass-dark);">
+                    <table class="data-table" style="font-size: 0.85rem; width: 100%;">
+                        <thead>
+                            <tr>
+                                <th>Invoice #</th>
+                                <th>Client Name</th>
+                                <th class="text-right">Total Amount</th>
+                                <th class="text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="invoice-fetch-list-body">
+                            <!-- Populated dynamically from JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer" style="padding: 1rem;">
+                <button type="button" class="btn btn-outline" id="btn-close-invoice-fetch-form">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fetch Client Details Modal -->
+    <div id="invoice-client-fetch-modal" class="modal-overlay hidden" style="z-index: 2100;">
+        <div class="modal-card glass" style="max-width: 600px;">
+            <div class="modal-header">
+                <h4>Fetch Client Details</h4>
+                <button type="button" class="btn-close" id="close-invoice-client-fetch-modal">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 1rem; display: flex; flex-direction: column; gap: 1rem;">
+                <p class="text-muted text-sm" style="font-size: 0.85rem; margin: 0;">Select a client from previous invoices to autofill the client details section.</p>
+                <div class="input-group" style="margin: 0;">
+                    <input type="text" id="invoice-client-search-input" placeholder="Search by Client Name or Email..." style="padding: 0.5rem; width: 100%; font-size: 0.9rem;">
+                </div>
+                <div style="max-height: 250px; overflow-y: auto; border: 1px solid var(--border-glass); border-radius: var(--radius-sm); background: var(--bg-glass-dark);">
+                    <table class="data-table" style="font-size: 0.85rem; width: 100%;">
+                        <thead>
+                            <tr>
+                                <th>Client Name</th>
+                                <th>Client Email</th>
+                                <th>Billing Address</th>
+                                <th class="text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="invoice-client-fetch-list-body">
+                            <!-- Populated dynamically from JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer" style="padding: 1rem;">
+                <button type="button" class="btn btn-outline" id="btn-close-invoice-client-fetch-form">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Invoice Quick Preview Popup Modal -->
+    <div id="invoice-preview-popup-modal" class="modal-overlay hidden" style="z-index: 2200;">
+        <div class="modal-card glass" style="max-width: 800px; width: 90%; max-height: 90vh; display: flex; flex-direction: column;">
+            <div class="modal-header">
+                <h4>Invoice Quick Preview</h4>
+                <button type="button" class="btn-close" id="close-invoice-preview-popup-modal">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 1rem; overflow-y: auto; flex-grow: 1; background: #0f172a;">
+                <div id="popup-invoice-paper" class="invoice-paper" style="box-shadow: none; padding: 1.5rem; margin: 0; background: #ffffff;">
+                    <div class="invoice-paper-header">
+                        <div class="invoice-company-side">
+                            <img id="popup-invoice-paper-logo" src="" alt="Company Logo" class="invoice-logo-print hidden">
+                            <h2 id="popup-invoice-paper-company-name">Company Name</h2>
+                            <p id="popup-invoice-paper-company-address"></p>
+                            <p id="popup-invoice-paper-company-contact"></p>
+                        </div>
+                        <div class="invoice-title-side text-right">
+                            <h1 class="invoice-title-text">INVOICE</h1>
+                            <div class="invoice-meta-fields">
+                                <div><strong>Invoice #:</strong> <span id="popup-invoice-paper-number"></span></div>
+                                <div><strong>Issue Date:</strong> <span id="popup-invoice-paper-issue-date"></span></div>
+                                <div><strong>Due Date:</strong> <span id="popup-invoice-paper-due-date"></span></div>
+                                <div><strong>Status:</strong> <span id="popup-invoice-paper-status" class="badge"></span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <hr class="print-hr">
+                    <div class="invoice-paper-billing">
+                        <h5>BILLED TO:</h5>
+                        <h4 id="popup-invoice-paper-client-name">Client Name</h4>
+                        <p id="popup-invoice-paper-client-address"></p>
+                        <p id="popup-invoice-paper-client-email"></p>
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="invoice-paper-items">
+                            <thead>
+                                <tr>
+                                    <th>Description</th>
+                                    <th class="text-right">Qty</th>
+                                    <th class="text-right">Unit Price</th>
+                                    <th class="text-right font-bold">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="popup-invoice-paper-items-list">
+                                <!-- Items filled dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="invoice-paper-footer-grid">
+                        <div class="flex-column-gap">
+                            <div class="invoice-paper-payment-details" id="popup-invoice-paper-payment-details-box">
+                                <h5>Payment Details:</h5>
+                                <p id="popup-invoice-paper-payment-details-text" style="white-space: pre-line;"></p>
+                            </div>
+                            <div class="invoice-paper-notes">
+                                <h5>Notes / Terms:</h5>
+                                <p id="popup-invoice-paper-notes-text" style="white-space: pre-line;">Notes...</p>
+                            </div>
+                        </div>
+                        <div class="paper-totals-box">
+                            <div class="p-row"><span>Subtotal:</span><span id="popup-invoice-paper-subtotal">$0.00</span></div>
+                            <div class="p-row"><span>Tax:</span><span id="popup-invoice-paper-tax">$0.00</span></div>
+                            <div class="p-row"><span>Discount:</span><span id="popup-invoice-paper-discount">-$0.00</span></div>
+                            <div class="p-row p-grand-total"><span>Grand Total:</span><span id="popup-invoice-paper-total">$0.00</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="padding: 1rem; display: flex; gap: 0.5rem; justify-content: right;">
+                <button type="button" class="btn btn-outline" id="btn-close-invoice-preview-popup-modal">Close</button>
+                <button type="button" class="btn btn-primary" id="btn-select-invoice-from-preview-popup">Select & Autofill</button>
             </div>
         </div>
     </div>
