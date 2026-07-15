@@ -17,7 +17,9 @@ let currentZoom = parseFloat(localStorage.getItem('vrtpocket_zoom')) || 1.0;
 
 // Cache for invoices
 let appData = {
-    invoices: []
+    invoices: [],
+    reminders: [],
+    reminderLogs: []
 };
 
 // Global dashboard charts references
@@ -25,6 +27,12 @@ let dashboardCharts = {
     statusPie: null,
     amountBar: null,
     monthlyLine: null
+};
+
+// Global reminders charts references
+let reminderCharts = {
+    categoryPie: null,
+    statusDoughnut: null
 };
 
 // ==================== DOM ELEMENTS & INIT ====================
@@ -218,6 +226,7 @@ function switchTab(tabId) {
     const titleMap = {
         'dashboard-tab': 'Financial Analytics Dashboard',
         'invoices-tab': 'Corporate Invoices Suite',
+        'reminders-tab': 'Recurring Reminders Registry',
         'profile-tab': 'System Settings',
         'display-tab': 'Display Settings'
     };
@@ -593,6 +602,46 @@ function setupEventListeners() {
     document.getElementById('invoice-tax').oninput = calculateInvoiceTotals;
     document.getElementById('invoice-discount').oninput = calculateInvoiceTotals;
 
+    // Reminders Event Listeners
+    const btnCreateReminder = document.getElementById('btn-create-reminder');
+    if (btnCreateReminder) {
+        btnCreateReminder.onclick = () => openReminderCreator();
+    }
+    const closeReminderModalBtn = document.getElementById('close-reminder-modal');
+    if (closeReminderModalBtn) {
+        closeReminderModalBtn.onclick = () => closeModal('reminder-modal');
+    }
+    const cancelReminderBtn = document.getElementById('btn-close-reminder-form');
+    if (cancelReminderBtn) {
+        cancelReminderBtn.onclick = () => closeModal('reminder-modal');
+    }
+    const reminderForm = document.getElementById('reminder-form');
+    if (reminderForm) {
+        reminderForm.onsubmit = (e) => saveReminderRecord(e);
+    }
+    const paymentTypeSelect = document.getElementById('reminder-payment-type');
+    if (paymentTypeSelect) {
+        paymentTypeSelect.onchange = (e) => {
+            const label = document.getElementById('reminder-value-label');
+            if (label) {
+                if (e.target.value === 'Percentage') {
+                    label.innerHTML = '<i class="fa-solid fa-percent"></i> Percentage Value *';
+                } else {
+                    label.innerHTML = '<i class="fa-solid fa-dollar-sign"></i> Amount Value *';
+                }
+            }
+        };
+    }
+
+    // Reminders Sub-tabs click handlers
+    document.querySelectorAll('.sub-tab-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const subtabId = btn.getAttribute('data-subtab');
+            switchSubTab(subtabId);
+        });
+    });
+
     // Mobile Navigation Drawer toggles
     const sidebar = document.querySelector('.sidebar');
     const overlay = document.getElementById('sidebar-overlay');
@@ -657,8 +706,36 @@ async function syncAllData() {
 
         appData.invoices = invoices;
 
+        // Fetch Reminders
+        const reminders = await pb.collection('VRTPOCKET_REMINDER_DATABASE').getFullList({
+            filter: `user = "${userId}"`,
+            sort: 'next_due_date'
+        }).catch(() => []);
+
+        appData.reminders = reminders;
+
+        // Fetch initial Reminders Logs
+        let reminderLogs = await pb.collection('VRTPOCKET_REMINDER_LOG_DATABASE').getFullList({
+            filter: `user = "${userId}"`,
+            sort: '-due_date'
+        }).catch(() => []);
+        appData.reminderLogs = reminderLogs;
+
+        // Process reminder logs auto-generation
+        await scanAndGenerateReminderLogs();
+
+        // Re-fetch Reminders Logs to include newly generated ones
+        reminderLogs = await pb.collection('VRTPOCKET_REMINDER_LOG_DATABASE').getFullList({
+            filter: `user = "${userId}"`,
+            sort: '-due_date'
+        }).catch(() => []);
+        appData.reminderLogs = reminderLogs;
+
         renderDashboard();
         renderInvoices();
+        renderReminders();
+        renderRemindersDashboard();
+        renderRemindersLogs();
         syncProfileFields();
 
     } catch (err) {
@@ -699,6 +776,559 @@ async function deleteTransactionRecord(id, collectionName) {
     } catch (error) {
         console.error(error);
         showToast('Deletion failed.', 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+// ==================== RECURRING REMINDERS SUITE ====================
+function calculateNextDueDate(startDateStr, frequency) {
+    if (!startDateStr) return null;
+    const start = new Date(startDateStr);
+    if (isNaN(start.getTime())) return null;
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Date comparison only
+    
+    const next = new Date(start);
+    if (next >= today) {
+        return next.toISOString();
+    }
+    
+    while (next < today) {
+        if (frequency.toLowerCase() === 'weekly') {
+            next.setDate(next.getDate() + 7);
+        } else if (frequency.toLowerCase() === 'monthly') {
+            next.setMonth(next.getMonth() + 1);
+        } else if (frequency.toLowerCase() === 'yearly') {
+            next.setFullYear(next.getFullYear() + 1);
+        } else {
+            break;
+        }
+    }
+    return next.toISOString();
+}
+
+function switchSubTab(subTabId) {
+    document.querySelectorAll('.sub-tab-btn').forEach(btn => {
+        if (btn.getAttribute('data-subtab') === subTabId) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+
+    document.querySelectorAll('.sub-tab-pane').forEach(pane => {
+        if (pane.id === subTabId) {
+            pane.classList.remove('hidden');
+        } else {
+            pane.classList.add('hidden');
+        }
+    });
+
+    // Re-render subtab specific data
+    if (subTabId === 'reminders-sub-log') {
+        renderRemindersLogs();
+    } else if (subTabId === 'reminders-sub-dashboard') {
+        renderRemindersDashboard();
+    }
+}
+
+async function scanAndGenerateReminderLogs() {
+    if (!currentUser) return;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const logsToCreate = [];
+
+    appData.reminders.forEach(r => {
+        if (!r.next_due_date) return;
+        const dueDate = new Date(r.next_due_date);
+        dueDate.setHours(0, 0, 0, 0);
+
+        // Parse interval
+        let intervalDays = 0;
+        if (r.remind_interval === '3 days before') {
+            intervalDays = 3;
+        } else if (r.remind_interval === '7 days before') {
+            intervalDays = 7;
+        }
+
+        // Calculate trigger date: due_date - intervalDays
+        const triggerDate = new Date(dueDate);
+        triggerDate.setDate(triggerDate.getDate() - intervalDays);
+        triggerDate.setHours(0, 0, 0, 0);
+
+        // If today is >= triggerDate, we check if we need to log it
+        if (today >= triggerDate) {
+            // Check if log already exists for this reminder and due date
+            const logExists = appData.reminderLogs.some(l => 
+                l.reminder === r.id && 
+                new Date(l.due_date).toDateString() === dueDate.toDateString()
+            );
+
+            if (!logExists) {
+                logsToCreate.push({
+                    user: currentUser.id,
+                    reminder: r.id,
+                    title: r.title,
+                    type: r.type,
+                    value: r.value,
+                    payment_type: r.payment_type,
+                    category: r.category,
+                    due_date: r.next_due_date,
+                    status: 'Pending',
+                    notes: r.notes || ''
+                });
+            }
+        }
+    });
+
+    if (logsToCreate.length > 0) {
+        // Create logs in PocketBase
+        const promises = logsToCreate.map(logData => 
+            pb.collection('VRTPOCKET_REMINDER_LOG_DATABASE').create(logData)
+        );
+        try {
+            await Promise.all(promises);
+            console.log(`Auto-generated ${logsToCreate.length} reminder occurrences logs.`);
+        } catch (err) {
+            console.error("Failed to auto-generate logs:", err);
+        }
+    }
+}
+
+async function changeReminderLogStatus(logId, newStatus) {
+    showLoading(true);
+    try {
+        const log = await pb.collection('VRTPOCKET_REMINDER_LOG_DATABASE').getOne(logId);
+        await pb.collection('VRTPOCKET_REMINDER_LOG_DATABASE').update(logId, { status: newStatus });
+        
+        // If marked as Paid, advance the parent reminder next due date
+        if (newStatus === 'Paid' && log.reminder) {
+            try {
+                const r = await pb.collection('VRTPOCKET_REMINDER_DATABASE').getOne(log.reminder);
+                const nextDate = new Date(r.next_due_date);
+                if (r.frequency.toLowerCase() === 'weekly') {
+                    nextDate.setDate(nextDate.getDate() + 7);
+                } else if (r.frequency.toLowerCase() === 'monthly') {
+                    nextDate.setMonth(nextDate.getMonth() + 1);
+                } else if (r.frequency.toLowerCase() === 'yearly') {
+                    nextDate.setFullYear(nextDate.getFullYear() + 1);
+                }
+                
+                await pb.collection('VRTPOCKET_REMINDER_DATABASE').update(r.id, {
+                    next_due_date: nextDate.toISOString()
+                });
+                showToast(`Status updated to Paid. Recurring schedule advanced to ${formatDateToDMY(nextDate)}.`, 'success');
+            } catch (pErr) {
+                console.error("Parent reminder update failed:", pErr);
+                showToast('Status updated, but failed to advance recurring schedule.', 'warning');
+            }
+        } else {
+            showToast(`Log status updated to ${newStatus}.`, 'success');
+        }
+        
+        syncAllData();
+    } catch (err) {
+        console.error(err);
+        showToast('Failed to update status.', 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+function renderReminders() {
+    const incomeBody = document.getElementById('reminders-income-table-body');
+    const expenseBody = document.getElementById('reminders-expense-table-body');
+    
+    if (!incomeBody || !expenseBody) return;
+    
+    incomeBody.innerHTML = '';
+    expenseBody.innerHTML = '';
+    
+    const incomeReminders = appData.reminders.filter(r => r.type === 'Income');
+    const expenseReminders = appData.reminders.filter(r => r.type === 'Expense');
+    
+    document.getElementById('reminders-income-summary').textContent = `${incomeReminders.length} Active`;
+    document.getElementById('reminders-expense-summary').textContent = `${expenseReminders.length} Active`;
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Render Income table
+    if (incomeReminders.length === 0) {
+        incomeBody.innerHTML = `<tr><td colspan="6" class="text-center text-muted">No income reminders configured.</td></tr>`;
+    } else {
+        incomeReminders.forEach(r => {
+            const valDisplay = r.payment_type === 'Percentage' ? `${r.value}%` : formatVal(r.value);
+            const typeClass = r.payment_type === 'Percentage' ? 'type-percentage' : 'type-fixed';
+            
+            // Calculate Next Due Urgency
+            const due = new Date(r.next_due_date);
+            due.setHours(0, 0, 0, 0);
+            const diffDays = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
+            
+            let dueClass = 'due-future';
+            if (diffDays <= 0) {
+                dueClass = 'due-overdue';
+            } else if (diffDays <= 7) {
+                dueClass = 'due-soon';
+            }
+            
+            incomeBody.innerHTML += `
+                <tr>
+                    <td><strong>${r.title}</strong></td>
+                    <td><span class="text-muted text-sm">${r.category}</span></td>
+                    <td><span class="badge ${typeClass}">${valDisplay}</span></td>
+                    <td>${r.frequency}</td>
+                    <td><span class="badge ${dueClass}">${formatDateToDMY(r.next_due_date)}</span></td>
+                    <td>
+                        <div class="reminder-actions">
+                            <button type="button" class="tbl-btn tbl-btn-edit" onclick="editReminderRecord('${r.id}')" title="Edit"><i class="fa-regular fa-pen-to-square"></i></button>
+                            <button type="button" class="tbl-btn tbl-btn-delete" onclick="deleteTransactionRecord('${r.id}', 'VRTPOCKET_REMINDER_DATABASE')" title="Delete"><i class="fa-regular fa-trash-can"></i></button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+    
+    // Render Expense table
+    if (expenseReminders.length === 0) {
+        expenseBody.innerHTML = `<tr><td colspan="6" class="text-center text-muted">No expense reminders configured.</td></tr>`;
+    } else {
+        expenseReminders.forEach(r => {
+            const valDisplay = r.payment_type === 'Percentage' ? `${r.value}%` : formatVal(r.value);
+            const typeClass = r.payment_type === 'Percentage' ? 'type-percentage' : 'type-fixed';
+            
+            // Calculate Next Due Urgency
+            const due = new Date(r.next_due_date);
+            due.setHours(0, 0, 0, 0);
+            const diffDays = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
+            
+            let dueClass = 'due-future';
+            if (diffDays <= 0) {
+                dueClass = 'due-overdue';
+            } else if (diffDays <= 7) {
+                dueClass = 'due-soon';
+            }
+            
+            expenseBody.innerHTML += `
+                <tr>
+                    <td><strong>${r.title}</strong></td>
+                    <td><span class="text-muted text-sm">${r.category}</span></td>
+                    <td><span class="badge ${typeClass}">${valDisplay}</span></td>
+                    <td>${r.frequency}</td>
+                    <td><span class="badge ${dueClass}">${formatDateToDMY(r.next_due_date)}</span></td>
+                    <td>
+                        <div class="reminder-actions">
+                            <button type="button" class="tbl-btn tbl-btn-edit" onclick="editReminderRecord('${r.id}')" title="Edit"><i class="fa-regular fa-pen-to-square"></i></button>
+                            <button type="button" class="tbl-btn tbl-btn-delete" onclick="deleteTransactionRecord('${r.id}', 'VRTPOCKET_REMINDER_DATABASE')" title="Delete"><i class="fa-regular fa-trash-can"></i></button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+}
+
+function renderRemindersLogs() {
+    const tableBody = document.getElementById('reminders-log-table-body');
+    if (!tableBody) return;
+    tableBody.innerHTML = '';
+    
+    document.getElementById('reminders-log-summary').textContent = `${appData.reminderLogs.length} Log${appData.reminderLogs.length !== 1 ? 's' : ''}`;
+    
+    if (appData.reminderLogs.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="7" class="text-center text-muted">No log occurrences generated. Check active reminders and trigger dates.</td></tr>`;
+        return;
+    }
+    
+    appData.reminderLogs.forEach(l => {
+        const valDisplay = l.payment_type === 'Percentage' ? `${l.value}%` : formatVal(l.value);
+        const typeBadgeClass = l.type === 'Income' ? 'status-paid' : 'status-overdue';
+        const paymentTypeBadge = l.payment_type === 'Percentage' ? 'type-percentage' : 'type-fixed';
+        
+        let statusBadgeClass = 'status-pending';
+        if (l.status === 'Paid') statusBadgeClass = 'status-paid';
+        else if (l.status === 'Noticed') statusBadgeClass = 'status-noticed';
+        
+        let actionButtons = '';
+        if (l.status === 'Pending') {
+            actionButtons = `
+                <button type="button" class="btn btn-xs btn-outline text-emerald" style="padding: 0.2rem 0.5rem;" onclick="changeReminderLogStatus('${l.id}', 'Paid')" title="Mark Paid"><i class="fa-solid fa-check"></i> Paid</button>
+                <button type="button" class="btn btn-xs btn-outline text-accent" style="padding: 0.2rem 0.5rem;" onclick="changeReminderLogStatus('${l.id}', 'Noticed')" title="Mark Noticed"><i class="fa-solid fa-eye"></i> Notice</button>
+            `;
+        } else if (l.status === 'Noticed') {
+            actionButtons = `
+                <button type="button" class="btn btn-xs btn-outline text-emerald" style="padding: 0.2rem 0.5rem;" onclick="changeReminderLogStatus('${l.id}', 'Paid')" title="Mark Paid"><i class="fa-solid fa-check"></i> Paid</button>
+                <button type="button" class="btn btn-xs btn-outline text-muted" style="padding: 0.2rem 0.5rem;" onclick="changeReminderLogStatus('${l.id}', 'Pending')" title="Mark Pending"><i class="fa-solid fa-undo"></i> Reset</button>
+            `;
+        } else if (l.status === 'Paid') {
+            actionButtons = `
+                <span class="text-emerald" style="font-size: 0.85rem; font-weight:600;"><i class="fa-solid fa-circle-check"></i> Resolved</span>
+                <button type="button" class="tbl-btn tbl-btn-edit" style="margin-left:0.5rem; display:inline-flex;" onclick="changeReminderLogStatus('${l.id}', 'Pending')" title="Revert to Pending"><i class="fa-solid fa-rotate-left"></i></button>
+            `;
+        }
+        
+        actionButtons += `
+            <button type="button" class="tbl-btn tbl-btn-delete" style="margin-left: 0.25rem;" onclick="deleteTransactionRecord('${l.id}', 'VRTPOCKET_REMINDER_LOG_DATABASE')" title="Delete Log"><i class="fa-regular fa-trash-can"></i></button>
+        `;
+        
+        tableBody.innerHTML += `
+            <tr>
+                <td><strong>${l.title}</strong></td>
+                <td><span class="badge ${typeBadgeClass}">${l.type}</span></td>
+                <td><span class="text-muted text-sm">${l.category || 'General'}</span></td>
+                <td><span class="badge ${paymentTypeBadge}">${valDisplay}</span></td>
+                <td>${formatDateToDMY(l.due_date)}</td>
+                <td><span class="badge ${statusBadgeClass}">${l.status}</span></td>
+                <td>
+                    <div style="display: flex; align-items: center; gap: 0.25rem;">
+                        ${actionButtons}
+                    </div>
+                </td>
+            </tr>
+        `;
+    });
+}
+
+function renderRemindersDashboard() {
+    let overdueCount = 0, overdueAmount = 0;
+    let upcomingExpenseCount = 0, upcomingExpenseAmount = 0;
+    let upcomingIncomeCount = 0, upcomingIncomeAmount = 0;
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    appData.reminderLogs.forEach(l => {
+        if (l.status === 'Paid') return;
+        const amt = parseFloat(l.value) || 0;
+        const due = new Date(l.due_date);
+        due.setHours(0, 0, 0, 0);
+        
+        if (due < today) {
+            overdueCount++;
+            overdueAmount += amt;
+        }
+        
+        if (l.type === 'Expense') {
+            upcomingExpenseCount++;
+            upcomingExpenseAmount += amt;
+        } else if (l.type === 'Income') {
+            upcomingIncomeCount++;
+            upcomingIncomeAmount += amt;
+        }
+    });
+    
+    document.getElementById('reminders-dashboard-overdue-count').textContent = overdueCount;
+    document.getElementById('reminders-dashboard-overdue-amount').textContent = `Value: ${formatVal(overdueAmount)}`;
+    
+    document.getElementById('reminders-dashboard-expense-amount').textContent = formatVal(upcomingExpenseAmount);
+    document.getElementById('reminders-dashboard-expense-count').textContent = `${upcomingExpenseCount} Pending log${upcomingExpenseCount !== 1 ? 's' : ''}`;
+    
+    document.getElementById('reminders-dashboard-income-amount').textContent = formatVal(upcomingIncomeAmount);
+    document.getElementById('reminders-dashboard-income-count').textContent = `${upcomingIncomeCount} Pending log${upcomingIncomeCount !== 1 ? 's' : ''}`;
+
+    // Category cost summation (Expense reminders)
+    const categories = {};
+    appData.reminders.forEach(r => {
+        if (r.type !== 'Expense') return;
+        const cat = r.category || 'Other';
+        const val = parseFloat(r.value) || 0;
+        categories[cat] = (categories[cat] || 0) + val;
+    });
+    
+    const catLabels = Object.keys(categories);
+    const catData = Object.values(categories);
+
+    // Log statuses count
+    let pendingLogs = 0, noticedLogs = 0, paidLogs = 0;
+    appData.reminderLogs.forEach(l => {
+        if (l.status === 'Pending') pendingLogs++;
+        else if (l.status === 'Noticed') noticedLogs++;
+        else if (l.status === 'Paid') paidLogs++;
+    });
+
+    // Destroy old charts
+    if (reminderCharts.categoryPie) {
+        reminderCharts.categoryPie.destroy();
+        reminderCharts.categoryPie = null;
+    }
+    if (reminderCharts.statusDoughnut) {
+        reminderCharts.statusDoughnut.destroy();
+        reminderCharts.statusDoughnut = null;
+    }
+
+    const ctxCat = document.getElementById('chart-reminder-category');
+    const ctxStatus = document.getElementById('chart-reminder-status');
+    
+    if (!ctxCat || !ctxStatus) return;
+
+    const isLight = document.body.getAttribute('data-theme') === 'light';
+    const textColor = isLight ? '#475569' : '#94a3b8';
+
+    reminderCharts.categoryPie = new Chart(ctxCat.getContext('2d'), {
+        type: 'pie',
+        data: {
+            labels: catLabels.length > 0 ? catLabels : ['No Expenses Configured'],
+            datasets: [{
+                data: catData.length > 0 ? catData : [1],
+                backgroundColor: catLabels.length > 0 ? 
+                    ['#6366f1', '#d946ef', '#f59e0b', '#10b981', '#f43f5e', '#8b5cf6', '#0ea5e9'] : 
+                    ['#64748b'],
+                borderWidth: isLight ? 2 : 0,
+                borderColor: isLight ? '#ffffff' : 'transparent'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        color: textColor,
+                        boxWidth: 12,
+                        font: { family: 'Plus Jakarta Sans', size: 11 }
+                    }
+                }
+            }
+        }
+    });
+
+    reminderCharts.statusDoughnut = new Chart(ctxStatus.getContext('2d'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Pending', 'Noticed', 'Paid'],
+            datasets: [{
+                data: [pendingLogs, noticedLogs, paidLogs],
+                backgroundColor: ['#f59e0b', '#0ea5e9', '#10b981'],
+                borderWidth: isLight ? 2 : 0,
+                borderColor: isLight ? '#ffffff' : 'transparent'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        color: textColor,
+                        boxWidth: 12,
+                        font: { family: 'Plus Jakarta Sans', size: 11 }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function openReminderCreator() {
+    const form = document.getElementById('reminder-form');
+    if (form) form.reset();
+    document.getElementById('reminder-record-id').value = '';
+    document.getElementById('reminder-modal-title').textContent = 'Configure Recurring Reminder';
+    
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('reminder-start-date').value = today;
+    
+    document.getElementById('reminder-remind-interval').value = 'Immediately';
+    
+    const label = document.getElementById('reminder-value-label');
+    if (label) {
+        label.innerHTML = '<i class="fa-solid fa-dollar-sign"></i> Amount Value *';
+    }
+    
+    openModal('reminder-modal');
+}
+
+async function saveReminderRecord(e) {
+    e.preventDefault();
+    showLoading(true);
+    
+    const recordId = document.getElementById('reminder-record-id').value;
+    const type = document.getElementById('reminder-type').value;
+    const category = document.getElementById('reminder-category').value;
+    const title = document.getElementById('reminder-title').value;
+    const paymentType = document.getElementById('reminder-payment-type').value;
+    const value = parseFloat(document.getElementById('reminder-value').value) || 0;
+    const startDate = document.getElementById('reminder-start-date').value;
+    const frequency = document.getElementById('reminder-frequency').value;
+    const remindInterval = document.getElementById('reminder-remind-interval').value;
+    const notes = document.getElementById('reminder-notes').value;
+    
+    const nextDueDate = calculateNextDueDate(startDate, frequency);
+    
+    const data = {
+        user: currentUser.id,
+        type,
+        category,
+        title,
+        payment_type: paymentType,
+        value,
+        start_date: new Date(startDate).toISOString(),
+        frequency,
+        next_due_date: nextDueDate,
+        remind_interval: remindInterval,
+        notes
+    };
+    
+    try {
+        if (recordId) {
+            await pb.collection('VRTPOCKET_REMINDER_DATABASE').update(recordId, data);
+            showToast('Recurring reminder updated.', 'success');
+        } else {
+            await pb.collection('VRTPOCKET_REMINDER_DATABASE').create(data);
+            showToast('New recurring reminder set up.', 'success');
+        }
+        
+        closeModal('reminder-modal');
+        syncAllData();
+    } catch (error) {
+        console.error(error);
+        showToast('Saving reminder failed. Confirm PocketBase schema.', 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+async function editReminderRecord(id) {
+    showLoading(true);
+    try {
+        const r = await pb.collection('VRTPOCKET_REMINDER_DATABASE').getOne(id);
+        
+        document.getElementById('reminder-record-id').value = r.id;
+        document.getElementById('reminder-type').value = r.type;
+        document.getElementById('reminder-category').value = r.category;
+        document.getElementById('reminder-title').value = r.title;
+        document.getElementById('reminder-payment-type').value = r.payment_type;
+        document.getElementById('reminder-value').value = r.value;
+        
+        if (r.start_date) {
+            document.getElementById('reminder-start-date').value = r.start_date.split('T')[0].split(' ')[0];
+        }
+        
+        document.getElementById('reminder-frequency').value = r.frequency;
+        document.getElementById('reminder-remind-interval').value = r.remind_interval || 'Immediately';
+        document.getElementById('reminder-notes').value = r.notes || '';
+        
+        const label = document.getElementById('reminder-value-label');
+        if (label) {
+            if (r.payment_type === 'Percentage') {
+                label.innerHTML = '<i class="fa-solid fa-percent"></i> Percentage Value *';
+            } else {
+                label.innerHTML = '<i class="fa-solid fa-dollar-sign"></i> Amount Value *';
+            }
+        }
+        
+        document.getElementById('reminder-modal-title').textContent = 'Modify Recurring Reminder';
+        openModal('reminder-modal');
+    } catch (error) {
+        console.error(error);
+        showToast('Failed to load reminder details.', 'error');
     } finally {
         showLoading(false);
     }
