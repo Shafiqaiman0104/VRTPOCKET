@@ -206,7 +206,10 @@
 
             <nav class="nav-menu">
                 <div class="nav-section-title">Operations</div>
-                <a href="#invoices" class="nav-link active" data-tab="invoices-tab">
+                <a href="#dashboard" class="nav-link active" data-tab="dashboard-tab">
+                    <i class="fa-solid fa-chart-pie"></i> <span>Dashboard</span>
+                </a>
+                <a href="#invoices" class="nav-link" data-tab="invoices-tab">
                     <i class="fa-solid fa-file-invoice-dollar"></i> <span>Invoice Suite</span>
                 </a>
                 <div class="nav-section-title">Settings</div>
@@ -247,8 +250,80 @@
             </header>
 
             <div class="content-body">
+                <!-- ==================== TAB: DASHBOARD ==================== -->
+                <section id="dashboard-tab" class="tab-pane active">
+                    <div class="dashboard-grid">
+                        <!-- Stat Card: Paid -->
+                        <div class="stat-card glass glow-emerald">
+                            <div class="stat-icon icon-paid"><i class="fa-solid fa-circle-check"></i></div>
+                            <div class="stat-info">
+                                <span class="stat-label">Total Paid</span>
+                                <h3 class="stat-value" id="dashboard-paid-amount">$0.00</h3>
+                                <span class="stat-subtext text-emerald" id="dashboard-paid-count">0 Invoices</span>
+                            </div>
+                        </div>
+                        <!-- Stat Card: Pending -->
+                        <div class="stat-card glass glow-amber">
+                            <div class="stat-icon icon-pending"><i class="fa-solid fa-hourglass-half"></i></div>
+                            <div class="stat-info">
+                                <span class="stat-label">Total Pending</span>
+                                <h3 class="stat-value" id="dashboard-pending-amount">$0.00</h3>
+                                <span class="stat-subtext text-amber" id="dashboard-pending-count">0 Invoices (Sent & Overdue)</span>
+                            </div>
+                        </div>
+                        <!-- Stat Card: Draft -->
+                        <div class="stat-card glass glow-purple">
+                            <div class="stat-icon icon-draft"><i class="fa-solid fa-file-pen"></i></div>
+                            <div class="stat-info">
+                                <span class="stat-label">Draft Status</span>
+                                <h3 class="stat-value" id="dashboard-draft-amount">$0.00</h3>
+                                <span class="stat-subtext text-muted" id="dashboard-draft-count">0 Invoices</span>
+                            </div>
+                        </div>
+                        <!-- Stat Card: Overdue -->
+                        <div class="stat-card glass glow-rose">
+                            <div class="stat-icon icon-overdue"><i class="fa-solid fa-circle-exclamation"></i></div>
+                            <div class="stat-info">
+                                <span class="stat-label">Overdue Status</span>
+                                <h3 class="stat-value" id="dashboard-overdue-amount">$0.00</h3>
+                                <span class="stat-subtext text-rose" id="dashboard-overdue-count">0 Invoices</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-charts-grid">
+                        <div class="chart-card glass">
+                            <div class="chart-header border-b">
+                                <h4>Invoice Count by Status</h4>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="chart-status-pie"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-card glass">
+                            <div class="chart-header border-b">
+                                <h4>Invoice Amount by Status</h4>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="chart-status-bar"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-charts-wide">
+                        <div class="chart-card glass">
+                            <div class="chart-header border-b">
+                                <h4>Monthly Revenue & Billing Trend</h4>
+                            </div>
+                            <div class="chart-container wide">
+                                <canvas id="chart-monthly-trend"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
                 <!-- ==================== TAB: INVOICES ==================== -->
-                <section id="invoices-tab" class="tab-pane active">
+                <section id="invoices-tab" class="tab-pane">
                     <div class="tab-actions-header">
                         <button class="btn btn-primary" id="btn-create-invoice"><i class="fa-solid fa-plus"></i> Design
                             New Invoice</button>
