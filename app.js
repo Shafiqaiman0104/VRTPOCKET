@@ -12,12 +12,19 @@ const pb = new PocketBase(pbUrl);
 
 // Application State
 let currentUser = null;
-let currentTab = 'invoices';
+let currentTab = 'dashboard';
 let currentZoom = parseFloat(localStorage.getItem('vrtpocket_zoom')) || 1.0;
 
 // Cache for invoices
 let appData = {
     invoices: []
+};
+
+// Global dashboard charts references
+let dashboardCharts = {
+    statusPie: null,
+    amountBar: null,
+    monthlyLine: null
 };
 
 // ==================== DOM ELEMENTS & INIT ====================
@@ -149,13 +156,13 @@ function showDashboard() {
 
     updateUserHeaderDisplay();
 
-    // Route to invoices initially or active hash
-    const currentHash = window.location.hash ? window.location.hash.substring(1) + '-tab' : 'invoices-tab';
+    // Route to dashboard initially or active hash
+    const currentHash = window.location.hash ? window.location.hash.substring(1) + '-tab' : 'dashboard-tab';
     const activeLink = document.querySelector(`.nav-link[data-tab="${currentHash}"]`);
     if (activeLink && !activeLink.classList.contains('disabled')) {
         switchTab(currentHash);
     } else {
-        switchTab('invoices-tab');
+        switchTab('dashboard-tab');
     }
 
     syncAllData();
@@ -209,13 +216,14 @@ function switchTab(tabId) {
     });
 
     const titleMap = {
+        'dashboard-tab': 'Financial Analytics Dashboard',
         'invoices-tab': 'Corporate Invoices Suite',
         'profile-tab': 'System Settings',
         'display-tab': 'Display Settings'
     };
     const pageTitle = document.getElementById('page-title');
     if (pageTitle) {
-        pageTitle.textContent = titleMap[tabId] || 'Corporate Invoices Suite';
+        pageTitle.textContent = titleMap[tabId] || 'Financial Analytics Dashboard';
     }
 
     currentTab = tabId.replace('-tab', '');
@@ -281,6 +289,11 @@ function setupEventListeners() {
             localStorage.setItem('theme', 'light');
             document.getElementById('theme-toggle').innerHTML = '<i class="fa-solid fa-sun"></i>';
             updateAppLogos(true);
+        }
+
+        // Re-render dashboard to update chart colors dynamically based on theme
+        if (currentUser) {
+            renderDashboard();
         }
     });
 
@@ -644,6 +657,7 @@ async function syncAllData() {
 
         appData.invoices = invoices;
 
+        renderDashboard();
         renderInvoices();
         syncProfileFields();
 
@@ -688,6 +702,241 @@ async function deleteTransactionRecord(id, collectionName) {
     } finally {
         showLoading(false);
     }
+}
+
+// ==================== FINANCIAL DASHBOARD MANAGEMENT ====================
+function renderDashboard() {
+    if (!currentUser) return;
+
+    let draftCount = 0, draftAmount = 0;
+    let sentCount = 0, sentAmount = 0;
+    let paidCount = 0, paidAmount = 0;
+    let overdueCount = 0, overdueAmount = 0;
+
+    appData.invoices.forEach(inv => {
+        const amt = parseFloat(inv.total_amount) || 0;
+        const status = (inv.status || 'Draft').toLowerCase();
+        if (status === 'draft') {
+            draftCount++;
+            draftAmount += amt;
+        } else if (status === 'sent') {
+            sentCount++;
+            sentAmount += amt;
+        } else if (status === 'paid') {
+            paidCount++;
+            paidAmount += amt;
+        } else if (status === 'overdue') {
+            overdueCount++;
+            overdueAmount += amt;
+        }
+    });
+
+    const pendingAmount = sentAmount + overdueAmount;
+    const pendingCount = sentCount + overdueCount;
+
+    // Update Text Elements
+    document.getElementById('dashboard-paid-amount').textContent = formatVal(paidAmount);
+    document.getElementById('dashboard-paid-count').textContent = `${paidCount} Invoice${paidCount !== 1 ? 's' : ''}`;
+    
+    document.getElementById('dashboard-pending-amount').textContent = formatVal(pendingAmount);
+    document.getElementById('dashboard-pending-count').textContent = `${pendingCount} Invoice${pendingCount !== 1 ? 's' : ''} (Sent & Overdue)`;
+    
+    document.getElementById('dashboard-draft-amount').textContent = formatVal(draftAmount);
+    document.getElementById('dashboard-draft-count').textContent = `${draftCount} Invoice${draftCount !== 1 ? 's' : ''}`;
+    
+    document.getElementById('dashboard-overdue-amount').textContent = formatVal(overdueAmount);
+    document.getElementById('dashboard-overdue-count').textContent = `${overdueCount} Invoice${overdueCount !== 1 ? 's' : ''}`;
+
+    // Chart.js Theme Adaptation Options
+    const isLight = document.body.getAttribute('data-theme') === 'light';
+    const textColor = isLight ? '#475569' : '#94a3b8';
+    const gridColor = isLight ? 'rgba(15, 23, 42, 0.08)' : 'rgba(255, 255, 255, 0.08)';
+
+    // Cleanup previous chart instances to prevent canvas reused error
+    if (dashboardCharts.statusPie) {
+        dashboardCharts.statusPie.destroy();
+        dashboardCharts.statusPie = null;
+    }
+    if (dashboardCharts.amountBar) {
+        dashboardCharts.amountBar.destroy();
+        dashboardCharts.amountBar = null;
+    }
+    if (dashboardCharts.monthlyLine) {
+        dashboardCharts.monthlyLine.destroy();
+        dashboardCharts.monthlyLine = null;
+    }
+
+    // Check if we have dashboard DOM nodes ready before initializing
+    const pieCanvas = document.getElementById('chart-status-pie');
+    const barCanvas = document.getElementById('chart-status-bar');
+    const lineCanvas = document.getElementById('chart-monthly-trend');
+
+    if (!pieCanvas || !barCanvas || !lineCanvas) return;
+
+    // 1. Circle Chart (Doughnut)
+    dashboardCharts.statusPie = new Chart(pieCanvas.getContext('2d'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Draft', 'Sent', 'Paid', 'Overdue'],
+            datasets: [{
+                data: [draftCount, sentCount, paidCount, overdueCount],
+                backgroundColor: ['#8b5cf6', '#f59e0b', '#10b981', '#f43f5e'],
+                borderWidth: isLight ? 2 : 0,
+                borderColor: isLight ? '#ffffff' : 'transparent'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        color: textColor,
+                        boxWidth: 12,
+                        padding: 15,
+                        font: { family: 'Plus Jakarta Sans', size: 12 }
+                    }
+                }
+            }
+        }
+    });
+
+    // 2. Bar Chart
+    dashboardCharts.amountBar = new Chart(barCanvas.getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: ['Draft', 'Sent', 'Paid', 'Overdue'],
+            datasets: [{
+                label: 'Total Invoiced amount',
+                data: [draftAmount, sentAmount, paidAmount, overdueAmount],
+                backgroundColor: [
+                    'rgba(139, 92, 246, 0.8)',
+                    'rgba(245, 158, 11, 0.8)',
+                    'rgba(16, 185, 129, 0.8)',
+                    'rgba(244, 63, 94, 0.8)'
+                ],
+                borderRadius: 6,
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                x: {
+                    ticks: { color: textColor, font: { family: 'Plus Jakarta Sans' } },
+                    grid: { display: false }
+                },
+                y: {
+                    ticks: { color: textColor, font: { family: 'Plus Jakarta Sans' } },
+                    grid: { color: gridColor }
+                }
+            }
+        }
+    });
+
+    // 3. Line Chart - Monthly Invoicing vs Collections Trend
+    const monthlyData = {};
+    appData.invoices.forEach(inv => {
+        if (!inv.issue_date) return;
+        const date = new Date(inv.issue_date);
+        if (isNaN(date.getTime())) return;
+        
+        const yyyy = date.getFullYear();
+        const mm = String(date.getMonth() + 1).padStart(2, '0');
+        const key = `${yyyy}-${mm}`;
+        
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const label = `${monthNames[date.getMonth()]} ${yyyy}`;
+        
+        if (!monthlyData[key]) {
+            monthlyData[key] = { label, invoiced: 0, collected: 0 };
+        }
+        
+        const amt = parseFloat(inv.total_amount) || 0;
+        monthlyData[key].invoiced += amt;
+        if ((inv.status || '').toLowerCase() === 'paid') {
+            monthlyData[key].collected += amt;
+        }
+    });
+
+    const sortedKeys = Object.keys(monthlyData).sort();
+    const labels = [];
+    const invoicedData = [];
+    const collectedData = [];
+
+    if (sortedKeys.length === 0) {
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const today = new Date();
+        for (let i = 5; i >= 0; i--) {
+            const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+            labels.push(`${monthNames[d.getMonth()]} ${d.getFullYear()}`);
+            invoicedData.push(0);
+            collectedData.push(0);
+        }
+    } else {
+        sortedKeys.forEach(k => {
+            labels.push(monthlyData[k].label);
+            invoicedData.push(monthlyData[k].invoiced);
+            collectedData.push(monthlyData[k].collected);
+        });
+    }
+
+    dashboardCharts.monthlyLine = new Chart(lineCanvas.getContext('2d'), {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Total Invoiced',
+                    data: invoicedData,
+                    borderColor: '#6366f1',
+                    backgroundColor: 'rgba(99, 102, 241, 0.08)',
+                    fill: true,
+                    tension: 0.35,
+                    borderWidth: 3,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#6366f1',
+                    pointHoverRadius: 6
+                },
+                {
+                    label: 'Paid (Collected)',
+                    data: collectedData,
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.08)',
+                    fill: true,
+                    tension: 0.35,
+                    borderWidth: 3,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#10b981',
+                    pointHoverRadius: 6
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: { color: textColor, font: { family: 'Plus Jakarta Sans', size: 12 } }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: { color: textColor, font: { family: 'Plus Jakarta Sans' } },
+                    grid: { display: false }
+                },
+                y: {
+                    ticks: { color: textColor, font: { family: 'Plus Jakarta Sans' } },
+                    grid: { color: gridColor }
+                }
+            }
+        }
+    });
 }
 
 // ==================== INVOICE MANAGEMENT SUITE ====================
