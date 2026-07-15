@@ -2334,3 +2334,118 @@ input:checked+.slider:before {
 .sub-item-paper-row td {
     border-bottom: 1px dashed #e2e8f0 !important;
 }
+
+/* ==================== DASHBOARD GRID & STAT CARDS ==================== */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.stat-card {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 1.5rem;
+    border-radius: var(--radius-md);
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+}
+
+.stat-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.25rem;
+    height: 3.25rem;
+    border-radius: 50%;
+    font-size: 1.5rem;
+}
+
+.icon-paid {
+    background: rgba(16, 185, 129, 0.12);
+    color: var(--emerald);
+}
+
+.icon-pending {
+    background: rgba(245, 158, 11, 0.12);
+    color: var(--amber);
+}
+
+.icon-draft {
+    background: rgba(139, 92, 246, 0.12);
+    color: var(--purple);
+}
+
+.icon-overdue {
+    background: rgba(244, 63, 94, 0.12);
+    color: var(--rose);
+}
+
+.stat-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.2;
+}
+
+.stat-subtext {
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+/* ==================== DASHBOARD CHARTS LAYOUT ==================== */
+.dashboard-charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.dashboard-charts-wide {
+    margin-bottom: 1.5rem;
+}
+
+.chart-card {
+    padding: 1.5rem;
+    border-radius: var(--radius-md);
+}
+
+.chart-header {
+    padding-bottom: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.chart-header h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.chart-container {
+    position: relative;
+    height: 280px;
+    width: 100%;
+}
+
+.chart-container.wide {
+    height: 340px;
+}
