@@ -1,19 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VRTPocket - Advanced Wealth Management Platform</title>
 
     <!-- SEO and Metadata -->
-    <meta name="description" content="VRTPocket is an advanced wealth management platform designed to manage personal and business operations, generate invoices, track investment portfolios, and compile summary statements.">
-    <meta name="keywords" content="wealth management, invoice builder, dynamic invoices, personal finance manager, investment tracker, ledger, business expenses, cash flow generator">
+    <meta name="description"
+        content="VRTPocket is an advanced wealth management platform designed to manage personal and business operations, generate invoices, track investment portfolios, and compile summary statements.">
+    <meta name="keywords"
+        content="wealth management, invoice builder, dynamic invoices, personal finance manager, investment tracker, ledger, business expenses, cash flow generator">
     <meta name="author" content="Venture Rush Tech">
     <meta name="theme-color" content="#4f46e5">
 
     <!-- Open Graph (Facebook, LinkedIn) -->
     <meta property="og:title" content="VRTPocket - Advanced Wealth Management Platform">
-    <meta property="og:description" content="Manage your personal, business, and investment finances in one sleek, secure dashboard. Generates invoices and dynamic cash flow summaries.">
+    <meta property="og:description"
+        content="Manage your personal, business, and investment finances in one sleek, secure dashboard. Generates invoices and dynamic cash flow summaries.">
     <meta property="og:image" content="https://vrtpocket.venturerushtech.com/favicon.ico">
     <meta property="og:url" content="https://vrtpocket.venturerushtech.com/">
     <meta property="og:type" content="website">
@@ -21,7 +25,8 @@
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="VRTPocket - Advanced Wealth Management Platform">
-    <meta name="twitter:description" content="Manage your personal, business, and investment finances in one sleek, secure dashboard. Generates invoices and dynamic cash flow summaries.">
+    <meta name="twitter:description"
+        content="Manage your personal, business, and investment finances in one sleek, secure dashboard. Generates invoices and dynamic cash flow summaries.">
     <meta name="twitter:image" content="https://vrtpocket.venturerushtech.com/favicon.ico">
 
     <!-- PWA Capabilities -->
@@ -33,7 +38,9 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Chart.js -->
@@ -43,6 +50,7 @@
     <!-- Stylesheet -->
     <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
     <!-- App Notifications -->
     <div id="toast-container" class="toast-container"></div>
@@ -83,7 +91,8 @@
                     <label for="login-password"><i class="fa-solid fa-lock"></i> Password</label>
                     <input type="password" id="login-password" required placeholder="••••••••">
                 </div>
-                <button type="submit" class="btn btn-primary btn-block">Sign In <i class="fa-solid fa-arrow-right-to-bracket"></i></button>
+                <button type="submit" class="btn btn-primary btn-block">Sign In <i
+                        class="fa-solid fa-arrow-right-to-bracket"></i></button>
                 <div class="auth-toggle">
                     Don't have an account? <span id="toggle-to-signup" class="toggle-link">Create Account</span>
                 </div>
@@ -91,149 +100,78 @@
 
             <!-- Signup Form -->
             <form id="signup-form" class="auth-form hidden">
-                <!-- Stepper Progress Bar -->
-                <div class="signup-stepper">
-                    <div class="signup-progress-line-fill" id="signup-progress-fill"></div>
-                    <div class="signup-step-indicator active" id="step-indicator-1">
-                        <div class="signup-step-circle">1</div>
-                        <div class="signup-step-text">Personal</div>
-                    </div>
-                    <div class="signup-step-indicator" id="step-indicator-2">
-                        <div class="signup-step-circle">2</div>
-                        <div class="signup-step-text">Company</div>
-                    </div>
-                    <div class="signup-step-indicator" id="step-indicator-3">
-                        <div class="signup-step-circle">3</div>
-                        <div class="signup-step-text">Currency</div>
-                    </div>
+                <div class="settings-section-divider" style="margin: 0 0 1rem 0;">
+                    <i class="fa-solid fa-user-plus"></i> Register Business Account
                 </div>
 
-                <!-- Wizard Step 1: Personal Details -->
-                <div id="wizard-step-1" class="signup-form-step">
+                <div class="input-grid">
                     <div class="input-group">
                         <label for="signup-email"><i class="fa-regular fa-envelope"></i> Email Address *</label>
                         <input type="email" id="signup-email" required placeholder="name@company.com">
                     </div>
-                    <div class="input-grid">
-                        <div class="input-group">
-                            <label for="signup-password"><i class="fa-solid fa-lock"></i> Password *</label>
-                            <input type="password" id="signup-password" required placeholder="Min. 8 characters">
-                        </div>
-                        <div class="input-group">
-                            <label for="signup-password-confirm"><i class="fa-solid fa-circle-check"></i> Confirm Password *</label>
-                            <input type="password" id="signup-password-confirm" required placeholder="••••••••">
-                        </div>
-                    </div>
-                    
-                    <div class="settings-section-divider" style="margin: 1rem 0 0.5rem 0;">
-                        <i class="fa-solid fa-user-tag"></i> Personal Details
-                    </div>
-                    
-                    <div class="profile-avatar-upload" style="margin-bottom: 0.5rem; padding: 0.75rem;">
-                        <div class="avatar-preview-box" style="width: 60px; height: 60px; border-radius: var(--radius-sm);">
-                            <img id="signup-avatar-preview" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%236366f1' d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E" alt="Avatar Preview">
-                        </div>
-                        <div class="avatar-upload-info" style="gap: 0.25rem;">
-                            <label for="signup-profile-picture" class="btn btn-xs btn-outline" style="padding: 0.35rem 0.75rem;"><i class="fa-solid fa-upload"></i> Profile Picture</label>
-                            <input type="file" id="signup-profile-picture" accept="image/*" class="hidden">
-                            <span class="text-muted text-sm" style="font-size: 0.7rem;">PNG, JPG or WebP</span>
-                        </div>
-                    </div>
-
                     <div class="input-group">
-                        <label for="signup-name"><i class="fa-solid fa-signature"></i> Full Name *</label>
-                        <input type="text" id="signup-name" required placeholder="John Doe">
-                    </div>
-                    
-                    <div class="input-grid">
-                        <div class="input-group">
-                            <label for="signup-personal-email" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                                <span><i class="fa-regular fa-envelope"></i> Personal Email *</span>
-                                <span id="signup-use-same-email" style="font-size: 0.75rem; text-decoration: underline; color: var(--primary); cursor: pointer; font-weight: 500;">(same as above email)</span>
-                            </label>
-                            <input type="email" id="signup-personal-email" required placeholder="john.doe@gmail.com">
-                        </div>
-                        <div class="input-group">
-                            <label for="signup-personal-phone"><i class="fa-solid fa-phone"></i> Contact Phone *</label>
-                            <input type="text" id="signup-personal-phone" required placeholder="+1 555-0199">
-                        </div>
-                    </div>
-                    
-                    <button type="button" class="btn btn-primary btn-block" id="btn-signup-next-1" style="margin-top: 0.5rem;">Next Step <i class="fa-solid fa-arrow-right"></i></button>
-                </div>
-
-                <!-- Wizard Step 2: Company Details -->
-                <div id="wizard-step-2" class="signup-form-step hidden">
-                    <div class="settings-section-divider" style="margin: 0 0 0.5rem 0;">
-                        <i class="fa-solid fa-building"></i> Company / Organization Details
-                    </div>
-                    
-                    <div class="profile-avatar-upload" style="margin-bottom: 0.5rem; padding: 0.75rem;">
-                        <div class="avatar-preview-box" style="width: 60px; height: 60px; border-radius: var(--radius-sm);">
-                            <img id="signup-company-logo-preview" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%236366f1' d='M12 2L2 22h20L12 2z'/%3E%3C/svg%3E" alt="Company Logo Preview">
-                        </div>
-                        <div class="avatar-upload-info" style="gap: 0.25rem;">
-                            <label for="signup-company-logo" class="btn btn-xs btn-outline" style="padding: 0.35rem 0.75rem;"><i class="fa-solid fa-upload"></i> Company Logo</label>
-                            <input type="file" id="signup-company-logo" accept="image/*" class="hidden">
-                            <span class="text-muted text-sm" style="font-size: 0.7rem;">PNG, JPG or WebP</span>
-                        </div>
-                    </div>
-
-                    <div class="input-group">
-                        <label for="signup-company-name"><i class="fa-solid fa-building"></i> Company / Organization Name *</label>
-                        <input type="text" id="signup-company-name" placeholder="Acme Corporation">
-                    </div>
-                    
-                    <div class="input-grid">
-                        <div class="input-group">
-                            <label for="signup-company-email" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                                <span><i class="fa-regular fa-envelope"></i> Company Email *</span>
-                                <span id="signup-use-same-email-company" style="font-size: 0.75rem; text-decoration: underline; color: var(--primary); cursor: pointer; font-weight: 500;">(same as login)</span>
-                            </label>
-                            <input type="email" id="signup-company-email" placeholder="billing@company.com">
-                        </div>
-                        <div class="input-group">
-                            <label for="signup-company-phone"><i class="fa-solid fa-phone"></i> Company Contact Phone *</label>
-                            <input type="text" id="signup-company-phone" placeholder="+1 555-0199">
-                        </div>
-                    </div>
-                    
-                    <div class="input-group">
-                        <label for="signup-company-address"><i class="fa-solid fa-location-dot"></i> Billing Address *</label>
-                        <textarea id="signup-company-address" rows="2" placeholder="123 Corporate Blvd, Suite 100, City, Country"></textarea>
-                    </div>
-
-                    <div class="signup-step-actions" style="gap: 0.5rem;">
-                        <button type="button" class="btn btn-outline" id="btn-signup-prev-2" title="Go back to Personal details"><i class="fa-solid fa-arrow-left"></i> Back</button>
-                        <button type="button" class="btn btn-outline" id="btn-signup-skip-2">Skip Company</button>
-                        <button type="button" class="btn btn-primary" id="btn-signup-next-2">Next <i class="fa-solid fa-arrow-right"></i></button>
+                        <label for="signup-company-name"><i class="fa-solid fa-building"></i> Company Name *</label>
+                        <input type="text" id="signup-company-name" required placeholder="Acme Corporation">
                     </div>
                 </div>
 
-                <!-- Wizard Step 3: Base Currency -->
-                <div id="wizard-step-3" class="signup-form-step hidden">
-                    <div class="settings-section-divider" style="margin: 0 0 0.5rem 0;">
-                        <i class="fa-solid fa-coins"></i> App Default Currency
-                    </div>
-                    
+                <div class="input-grid">
                     <div class="input-group">
-                        <label for="signup-currency">Base Currency</label>
-                        <select id="signup-currency">
-                            <option value="USD" selected>USD ($)</option>
-                            <option value="MYR">MYR (RM)</option>
-                            <option value="EUR">EUR (€)</option>
-                            <option value="GBP">GBP (£)</option>
-                            <option value="SGD">SGD (S$)</option>
-                            <option value="AUD">AUD (A$)</option>
-                        </select>
-                        <span class="input-help">Select the base currency for all your financial index values.</span>
+                        <label for="signup-password"><i class="fa-solid fa-lock"></i> Password *</label>
+                        <input type="password" id="signup-password" required placeholder="Min. 8 characters">
                     </div>
-
-                    <div class="signup-step-actions">
-                        <button type="button" class="btn btn-outline" id="btn-signup-prev-3"><i class="fa-solid fa-arrow-left"></i> Back</button>
-                        <button type="submit" class="btn btn-accent">Complete Sign Up <i class="fa-solid fa-user-plus"></i></button>
+                    <div class="input-group">
+                        <label for="signup-password-confirm"><i class="fa-solid fa-circle-check"></i> Confirm Password *</label>
+                        <input type="password" id="signup-password-confirm" required placeholder="••••••••">
                     </div>
                 </div>
+
+                <div class="profile-avatar-upload" style="margin-bottom: 1rem; padding: 0.75rem;">
+                    <div class="avatar-preview-box"
+                        style="width: 60px; height: 60px; border-radius: var(--radius-sm);">
+                        <img id="signup-company-logo-preview"
+                            src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%236366f1' d='M12 2L2 22h20L12 2z'/%3E%3C/svg%3E"
+                            alt="Company Logo Preview">
+                    </div>
+                    <div class="avatar-upload-info" style="gap: 0.25rem;">
+                        <label for="signup-company-logo" class="btn btn-xs btn-outline"
+                            style="padding: 0.35rem 0.75rem;"><i class="fa-solid fa-upload"></i> Company Logo</label>
+                        <input type="file" id="signup-company-logo" accept="image/*" class="hidden">
+                        <span class="text-muted text-sm" style="font-size: 0.7rem;">PNG, JPG or WebP</span>
+                    </div>
+                </div>
+
+                <div class="input-grid">
+                    <div class="input-group">
+                        <label for="signup-company-email"><i class="fa-regular fa-envelope"></i> Company Email *</label>
+                        <input type="email" id="signup-company-email" required placeholder="billing@company.com">
+                    </div>
+                    <div class="input-group">
+                        <label for="signup-company-phone"><i class="fa-solid fa-phone"></i> Company Contact Phone *</label>
+                        <input type="text" id="signup-company-phone" required placeholder="+1 555-0199">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="signup-company-address"><i class="fa-solid fa-location-dot"></i> Billing Address *</label>
+                    <textarea id="signup-company-address" required rows="2"
+                        placeholder="123 Corporate Blvd, Suite 100, City, Country"></textarea>
+                </div>
+
+                <div class="input-group">
+                    <label for="signup-currency">Base Currency</label>
+                    <select id="signup-currency">
+                        <option value="USD" selected>USD ($)</option>
+                        <option value="MYR">MYR (RM)</option>
+                        <option value="EUR">EUR (€)</option>
+                        <option value="GBP">GBP (£)</option>
+                        <option value="SGD">SGD (S$)</option>
+                        <option value="AUD">AUD (A$)</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-accent btn-block" style="margin-top: 1rem;">Complete Sign Up <i
+                        class="fa-solid fa-user-plus"></i></button>
 
                 <div class="auth-toggle">
                     Already have an account? <span id="toggle-to-login" class="toggle-link">Return to Sign In</span>
@@ -250,19 +188,15 @@
                 <div class="brand">
                     <img id="app-logo-sidebar" src="vrLogoBlue.png" alt="VRTPocket Logo" class="brand-logo-img">
                     <span class="brand-text">VRTPocket</span>
-                    <button class="sidebar-close-btn" id="sidebar-close-btn" title="Close navigation menu">&times;</button>
+                    <button class="sidebar-close-btn" id="sidebar-close-btn"
+                        title="Close navigation menu">&times;</button>
                 </div>
-                <!-- Personal User Badge -->
-                <div class="user-company-badge" id="sidebar-personal-badge">
-                    <img id="header-personal-avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%236366f1' d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E" alt="Personal Avatar" class="company-logo-avatar">
-                    <div class="user-company-info">
-                        <div id="header-personal-name" class="company-name-text">User Name</div>
-                        <div id="header-personal-email" class="user-email-text">user@email.com</div>
-                    </div>
-                </div>
-                <!-- Company Badge (hidden if no company) -->
-                <div class="user-company-badge hidden" id="sidebar-company-badge" style="margin-top: 0.5rem; border-top: 1px dashed var(--border-glass); padding-top: 0.5rem; border-radius: 0;">
-                    <img id="header-company-logo" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%236366f1' d='M12 2L2 22h20L12 2z'/%3E%3C/svg%3E" alt="Company Logo" class="company-logo-avatar">
+                <!-- Business Profile Badge -->
+                <div class="user-company-badge" id="sidebar-company-badge"
+                    style="margin-top: 0.5rem; border-top: 1px dashed var(--border-glass); padding-top: 0.5rem; border-radius: 0;">
+                    <img id="header-company-logo"
+                        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%236366f1' d='M12 2L2 22h20L12 2z'/%3E%3C/svg%3E"
+                        alt="Company Logo" class="company-logo-avatar">
                     <div class="user-company-info">
                         <div id="header-company-name" class="company-name-text">Company Name</div>
                         <div id="header-company-email" class="user-email-text">company@email.com</div>
@@ -271,24 +205,9 @@
             </div>
 
             <nav class="nav-menu">
-                <a href="#dashboard" class="nav-link active" data-tab="dashboard-tab">
-                    <i class="fa-solid fa-circle-nodes"></i> <span>Dashboard</span>
-                </a>
                 <div class="nav-section-title">Operations</div>
-                <a href="#personal" class="nav-link" data-tab="personal-tab">
-                    <i class="fa-solid fa-user-gear"></i> <span>Personal Wealth</span>
-                </a>
-                <a href="#business" class="nav-link" data-tab="business-tab">
-                    <i class="fa-solid fa-wallet"></i> <span>Business Finance</span>
-                </a>
-                <a href="#investments" class="nav-link" data-tab="investments-tab">
-                    <i class="fa-solid fa-arrow-trend-up"></i> <span>Investments & ROI</span>
-                </a>
-                <a href="#invoices" class="nav-link" data-tab="invoices-tab">
+                <a href="#invoices" class="nav-link active" data-tab="invoices-tab">
                     <i class="fa-solid fa-file-invoice-dollar"></i> <span>Invoice Suite</span>
-                </a>
-                <a href="#reports" class="nav-link" data-tab="reports-tab">
-                    <i class="fa-solid fa-file-shield"></i> <span>Reports Engine</span>
                 </a>
                 <div class="nav-section-title">Settings</div>
                 <a href="#profile" class="nav-link" data-tab="profile-tab">
@@ -308,7 +227,7 @@
 
         <!-- Main Content Area -->
         <main class="content-wrapper">
-            
+
             <!-- TOP BAR -->
             <header class="topbar glass">
                 <div class="topbar-left">
@@ -316,18 +235,7 @@
                         <i class="fa-solid fa-bars"></i>
                     </button>
                     <div class="dashboard-dropdown-wrapper">
-                        <h2 id="page-title" class="page-title">Financial Dashboard</h2>
-                        <div id="dashboard-segment-selector" class="dashboard-segment-selector">
-                            <button id="dashboard-segment-btn" class="dashboard-segment-btn" title="Filter Dashboard View">
-                                <i class="fa-solid fa-chevron-down"></i>
-                            </button>
-                            <div id="dashboard-segment-menu" class="dashboard-segment-menu hidden">
-                                <button class="segment-menu-item active" data-segment="all"><i class="fa-solid fa-globe"></i> All-in-One Dashboard</button>
-                                <button class="segment-menu-item" data-segment="personal"><i class="fa-solid fa-user"></i> Personal Only</button>
-                                <button class="segment-menu-item" data-segment="business"><i class="fa-solid fa-briefcase"></i> Business Only</button>
-                                <button class="segment-menu-item" data-segment="investments"><i class="fa-solid fa-chart-line"></i> Investments Only</button>
-                            </div>
-                        </div>
+                        <h2 id="page-title" class="page-title">Corporate Invoices Suite</h2>
                     </div>
                 </div>
                 <div class="topbar-actions">
@@ -339,357 +247,11 @@
             </header>
 
             <div class="content-body">
-                <!-- ==================== TAB: DASHBOARD ==================== -->
-                <section id="dashboard-tab" class="tab-pane active">
-                    <div class="dashboard-banner">
-                        <div class="banner-text">
-                            <h3>Welcome back, <span class="text-gradient font-bold" id="dashboard-welcome-name">User</span>!</h3>
-                            <p>Here is your current financial index and health status summary.</p>
-                        </div>
-                    </div>
-
-                    <!-- Dashboard Filter Bar -->
-                    <div class="card glass flex-space-between flex-wrap" style="padding: 1rem 1.5rem; margin-bottom: 1.5rem; gap: 1rem; align-items: center; justify-content: space-between;">
-                        <div class="flex-align-center" style="gap: 0.5rem; display: flex; align-items: center;">
-                            <i class="fa-regular fa-calendar-check text-muted" style="font-size: 1.25rem;"></i>
-                            <span class="font-bold text-sm" style="color: var(--text-muted); font-size: 0.9rem;">Date Filter:</span>
-                        </div>
-                        <div class="flex-align-center flex-wrap" style="gap: 0.75rem; display: flex; align-items: center; flex-wrap: wrap;">
-                            <div class="select-wrapper">
-                                <select id="dashboard-date-filter-type" class="form-control" style="width: auto; min-width: 140px; padding: 0.4rem 2rem 0.4rem 1rem; font-size: 0.875rem;">
-                                    <option value="all" selected>All Time</option>
-                                    <option value="month">Select Month</option>
-                                    <option value="custom">Custom Range</option>
-                                </select>
-                            </div>
-
-                            <!-- Month Picker Display -->
-                            <div id="dashboard-selected-month-display" class="hidden">
-                                <button type="button" class="btn btn-sm btn-outline" id="btn-change-month-filter" style="padding: 0.4rem 1rem; font-size: 0.875rem; display: flex; align-items: center; gap: 0.4rem;">
-                                    <i class="fa-regular fa-calendar-days"></i> <span id="month-filter-label">July 2026</span>
-                                </button>
-                            </div>
-
-                            <!-- Custom Date Range Display -->
-                            <div id="dashboard-custom-date-wrapper" class="flex-align-center hidden" style="gap: 0.5rem; display: flex; align-items: center;">
-                                <input type="date" id="dashboard-date-from" class="form-control" style="padding: 0.35rem; font-size: 0.875rem; width: auto;">
-                                <span class="text-sm text-muted" style="color: var(--text-muted);">to</span>
-                                <input type="date" id="dashboard-date-to" class="form-control" style="padding: 0.35rem; font-size: 0.875rem; width: auto;">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Mini Stat Cards -->
-                    <div class="metrics-grid">
-                        <!-- Stat Card 1 -->
-                        <div id="card-wrapper-personal" class="card stat-card glass glow-indigo">
-                            <div class="stat-icon"><i class="fa-solid fa-vault"></i></div>
-                            <div class="stat-info">
-                                <span class="stat-label">Net Personal Value</span>
-                                <h3 id="stat-personal-net" class="stat-value">$0.00</h3>
-                                <p class="stat-subtext"><span class="text-emerald" id="stat-personal-income-sum">+$0.00</span> | <span class="text-rose" id="stat-personal-expense-sum">-$0.00</span></p>
-                            </div>
-                        </div>
-                        <!-- Stat Card 2 -->
-                        <div id="card-wrapper-business" class="card stat-card glass glow-emerald">
-                            <div class="stat-icon"><i class="fa-solid fa-building-columns"></i></div>
-                            <div class="stat-info">
-                                <span class="stat-label">Net Business Value</span>
-                                <h3 id="stat-business-net" class="stat-value">$0.00</h3>
-                                <p class="stat-subtext"><span class="text-emerald" id="stat-business-income-sum">+$0.00</span> | <span class="text-rose" id="stat-business-expense-sum">-$0.00</span></p>
-                            </div>
-                        </div>
-                        <!-- Stat Card 3 -->
-                        <div id="card-wrapper-investments" class="card stat-card glass glow-purple">
-                            <div class="stat-icon"><i class="fa-solid fa-chart-pie"></i></div>
-                            <div class="stat-info">
-                                <span class="stat-label">Investments Asset Value</span>
-                                <h3 id="stat-investments-value" class="stat-value">$0.00</h3>
-                                <p class="stat-subtext">Total ROI: <span class="text-emerald" id="stat-investments-roi">0.00%</span></p>
-                            </div>
-                        </div>
-                        <!-- Stat Card 4 -->
-                        <div id="card-wrapper-invoices" class="card stat-card glass glow-amber">
-                            <div class="stat-icon"><i class="fa-solid fa-file-invoice"></i></div>
-                            <div class="stat-info">
-                                <span class="stat-label">Invoice Ledger</span>
-                                <h3 id="stat-invoices-outstanding" class="stat-value">$0.00</h3>
-                                <p class="stat-subtext"><span id="stat-invoices-paid-count">0</span> Paid | <span id="stat-invoices-pending-count">0</span> Pending</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Charts Row -->
-                    <div class="layout-grid-2">
-                        <div id="card-wrapper-cashflow-chart" class="card glass chart-card">
-                            <div class="card-header">
-                                <h4>Cashflow Trends (Income vs Expenses)</h4>
-                            </div>
-                            <div class="chart-container">
-                                <canvas id="cashflowTrendChart"></canvas>
-                            </div>
-                        </div>
-                        <div id="card-wrapper-expense-chart" class="card glass chart-card">
-                            <div class="card-header">
-                                <h4 id="expense-chart-title">Expense Breakdown by Categories</h4>
-                            </div>
-                            <div class="chart-container">
-                                <canvas id="expenseDistributionChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Lower Overview Grid -->
-                    <div class="layout-grid-2">
-                        <!-- Upcoming Subscriptions -->
-                        <div id="card-wrapper-subscriptions-list" class="card glass">
-                            <div class="card-header">
-                                <h4>Active Subscriptions Due</h4>
-                            </div>
-                            <div class="table-wrapper">
-                                <table class="data-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Description</th>
-                                            <th>Type</th>
-                                            <th>Amount</th>
-                                            <th>Interval</th>
-                                            <th>Next Due Date</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="dashboard-subscriptions-list">
-                                        <tr>
-                                            <td colspan="5" class="text-center text-muted">No active subscriptions detected.</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        <!-- Investment Performance List -->
-                        <div id="card-wrapper-investments-list" class="card glass">
-                            <div class="card-header">
-                                <h4>Top Investments</h4>
-                            </div>
-                            <div class="table-wrapper">
-                                <table class="data-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Asset</th>
-                                            <th>Original</th>
-                                            <th>Current Value</th>
-                                            <th>ROI</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="dashboard-investments-list">
-                                        <tr>
-                                            <td colspan="4" class="text-center text-muted">No investments logged.</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- ==================== TAB: PERSONAL WEALTH ==================== -->
-                <section id="personal-tab" class="tab-pane">
-                    <!-- Action Headers -->
-                    <div class="tab-actions-header">
-                        <div class="btn-group">
-                            <button class="btn btn-primary" id="btn-add-p-income"><i class="fa-solid fa-plus"></i> Add Income</button>
-                            <button class="btn btn-accent" id="btn-add-p-expense"><i class="fa-solid fa-plus"></i> Add Expense/Subscription</button>
-                        </div>
-                    </div>
-
-                    <div class="layout-grid-2">
-                        <!-- Personal Income Table -->
-                        <div class="card glass">
-                            <div class="card-header border-b">
-                                <h4>Personal Income Ledger</h4>
-                            </div>
-                            <div class="table-wrapper">
-                                <table class="data-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Title</th>
-                                            <th>Amount</th>
-                                            <th>Frequency</th>
-                                            <th>Date</th>
-                                            <th>Category</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="personal-income-list">
-                                        <tr>
-                                            <td colspan="6" class="text-center text-muted">Loading data...</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        <!-- Personal Expenses Table -->
-                        <div class="card glass">
-                            <div class="card-header border-b">
-                                <h4>Personal Expenses & Subscriptions Ledger</h4>
-                            </div>
-                            <div class="table-wrapper">
-                                <table class="data-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Title</th>
-                                            <th>Amount</th>
-                                            <th>Type</th>
-                                            <th>Frequency</th>
-                                            <th>Next Due Date</th>
-                                            <th>Category</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="personal-expense-list">
-                                        <tr>
-                                            <td colspan="7" class="text-center text-muted">Loading data...</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- ==================== TAB: BUSINESS FINANCE ==================== -->
-                <section id="business-tab" class="tab-pane">
-                    <div class="tab-actions-header">
-                        <div class="btn-group">
-                            <button class="btn btn-primary" id="btn-add-b-income"><i class="fa-solid fa-plus"></i> Add Income</button>
-                            <button class="btn btn-accent" id="btn-add-b-expense"><i class="fa-solid fa-plus"></i> Add Expense/Subscription</button>
-                        </div>
-                    </div>
-
-                    <div class="layout-grid-2">
-                        <!-- Business Income Table -->
-                        <div class="card glass">
-                            <div class="card-header border-b">
-                                <h4>Business Income Ledger</h4>
-                            </div>
-                            <div class="table-wrapper">
-                                <table class="data-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Title</th>
-                                            <th>Amount</th>
-                                            <th>Frequency</th>
-                                            <th>Date</th>
-                                            <th>Category</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="business-income-list">
-                                        <tr>
-                                            <td colspan="6" class="text-center text-muted">Loading data...</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        <!-- Business Expenses Table -->
-                        <div class="card glass">
-                            <div class="card-header border-b">
-                                <h4>Business Expenses & Subscriptions Ledger</h4>
-                            </div>
-                            <div class="table-wrapper">
-                                <table class="data-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Title</th>
-                                            <th>Amount</th>
-                                            <th>Type</th>
-                                            <th>Frequency</th>
-                                            <th>Next Due Date</th>
-                                            <th>Category</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="business-expense-list">
-                                        <tr>
-                                            <td colspan="7" class="text-center text-muted">Loading data...</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- ==================== TAB: INVESTMENTS ==================== -->
-                <section id="investments-tab" class="tab-pane">
-                    <div class="tab-actions-header">
-                        <button class="btn btn-primary" id="btn-add-investment"><i class="fa-solid fa-plus"></i> Log New Asset Investment</button>
-                    </div>
-
-                    <!-- Investments List -->
-                    <div class="card glass">
-                        <div class="card-header border-b">
-                            <h4>Investment Assets Portfolio</h4>
-                        </div>
-                        <div class="table-wrapper">
-                            <table class="data-table">
-                                <thead>
-                                    <tr>
-                                        <th>Asset Name</th>
-                                        <th>Asset Type</th>
-                                        <th>Capital Invested</th>
-                                        <th>Current Valuation</th>
-                                        <th>Total Fees/Expenses</th>
-                                        <th>Net Return</th>
-                                        <th>ROI %</th>
-                                        <th>Purchase Date</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="investments-list">
-                                    <tr>
-                                        <td colspan="9" class="text-center text-muted">Loading portfolio...</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- Investment Expenses Log Card -->
-                    <div class="card glass" style="margin-top: 2rem;">
-                        <div class="card-header border-b flex-space-between">
-                            <h4>Investment Expenses & Fees Log</h4>
-                            <button class="btn btn-sm btn-accent" id="btn-add-investment-expense-direct"><i class="fa-solid fa-plus"></i> Log General/Asset Expense</button>
-                        </div>
-                        <div class="table-wrapper">
-                            <table class="data-table">
-                                <thead>
-                                    <tr>
-                                        <th>Asset Name</th>
-                                        <th>Amount</th>
-                                        <th>Fee Type</th>
-                                        <th>Date Paid</th>
-                                        <th>Notes</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="investment-expenses-list">
-                                    <tr>
-                                        <td colspan="6" class="text-center text-muted">No investment expenses logged.</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </section>
-
                 <!-- ==================== TAB: INVOICES ==================== -->
-                <section id="invoices-tab" class="tab-pane">
+                <section id="invoices-tab" class="tab-pane active">
                     <div class="tab-actions-header">
-                        <button class="btn btn-primary" id="btn-create-invoice"><i class="fa-solid fa-plus"></i> Design New Invoice</button>
+                        <button class="btn btn-primary" id="btn-create-invoice"><i class="fa-solid fa-plus"></i> Design
+                            New Invoice</button>
                     </div>
 
                     <!-- Invoices List Container -->
@@ -724,14 +286,17 @@
                         <div class="card-header border-b flex-space-between">
                             <div style="display: flex; align-items: center; gap: 1rem;">
                                 <h4 id="invoice-builder-title">Create Dynamic Invoice</h4>
-                                <button type="button" class="btn btn-xs btn-accent" id="btn-invoice-fetch-prev" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; border-radius: var(--radius-sm);"><i class="fa-solid fa-cloud-arrow-down"></i> Fetch Prev Invoice</button>
+                                <button type="button" class="btn btn-xs btn-accent" id="btn-invoice-fetch-prev"
+                                    style="padding: 0.25rem 0.5rem; font-size: 0.75rem; border-radius: var(--radius-sm);"><i
+                                        class="fa-solid fa-cloud-arrow-down"></i> Fetch Prev Invoice</button>
                             </div>
-                            <button class="btn btn-outline btn-sm" id="btn-invoice-back"><i class="fa-solid fa-arrow-left"></i> Back to Registry</button>
+                            <button class="btn btn-outline btn-sm" id="btn-invoice-back"><i
+                                    class="fa-solid fa-arrow-left"></i> Back to Registry</button>
                         </div>
                         <div class="card-body">
                             <form id="invoice-form" class="app-form">
                                 <input type="hidden" id="invoice-record-id">
-                                
+
                                 <div class="layout-grid-3">
                                     <div class="input-group">
                                         <label for="invoice-number">Invoice Number *</label>
@@ -750,21 +315,28 @@
                                 <div class="layout-grid-2">
                                     <!-- Client info -->
                                     <div class="invoice-box-sub glass-dark">
-                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                                        <div
+                                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
                                             <h5 style="margin: 0;">Client Details</h5>
-                                            <button type="button" class="btn btn-xs btn-accent" id="btn-invoice-fetch-client" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; border-radius: var(--radius-sm);"><i class="fa-solid fa-user-tag"></i> Fetch Client Data</button>
+                                            <button type="button" class="btn btn-xs btn-accent"
+                                                id="btn-invoice-fetch-client"
+                                                style="padding: 0.25rem 0.5rem; font-size: 0.75rem; border-radius: var(--radius-sm);"><i
+                                                    class="fa-solid fa-user-tag"></i> Fetch Client Data</button>
                                         </div>
                                         <div class="input-group">
                                             <label for="invoice-client-name">Client Name *</label>
-                                            <input type="text" id="invoice-client-name" required placeholder="Customer Corp Inc">
+                                            <input type="text" id="invoice-client-name" required
+                                                placeholder="Customer Corp Inc">
                                         </div>
                                         <div class="input-group">
                                             <label for="invoice-client-email">Client Email</label>
-                                            <input type="email" id="invoice-client-email" placeholder="billing@client.com">
+                                            <input type="email" id="invoice-client-email"
+                                                placeholder="billing@client.com">
                                         </div>
                                         <div class="input-group">
                                             <label for="invoice-client-address">Billing Address</label>
-                                            <textarea id="invoice-client-address" rows="2" placeholder="Street Address, State, ZIP"></textarea>
+                                            <textarea id="invoice-client-address" rows="2"
+                                                placeholder="Street Address, State, ZIP"></textarea>
                                         </div>
                                     </div>
 
@@ -795,9 +367,10 @@
                                 <div class="invoice-items-section">
                                     <div class="flex-space-between item-section-title">
                                         <h5>Line Items</h5>
-                                        <button type="button" class="btn btn-sm btn-accent" id="add-invoice-item-row"><i class="fa-solid fa-plus"></i> Add Item Row</button>
+                                        <button type="button" class="btn btn-sm btn-accent" id="add-invoice-item-row"><i
+                                                class="fa-solid fa-plus"></i> Add Item Row</button>
                                     </div>
-                                    
+
                                     <div class="invoice-items-table-wrapper">
                                         <div class="invoice-items-headers">
                                             <span class="col-desc">Description</span>
@@ -816,24 +389,33 @@
                                 <div class="layout-grid-2">
                                     <div class="flex-column-gap">
                                         <div class="input-group">
-                                            <label for="invoice-payment-details"><i class="fa-solid fa-building-columns"></i> Payment Details</label>
-                                            <textarea id="invoice-payment-details" rows="2" placeholder="Bank account info, wire instructions..."></textarea>
+                                            <label for="invoice-payment-details"><i
+                                                    class="fa-solid fa-building-columns"></i> Payment Details</label>
+                                            <textarea id="invoice-payment-details" rows="2"
+                                                placeholder="Bank account info, wire instructions..."></textarea>
                                         </div>
                                         <div class="input-group">
-                                            <label for="invoice-notes"><i class="fa-regular fa-comment-dots"></i> Notes / Terms</label>
-                                            <textarea id="invoice-notes" rows="2" placeholder="Terms: Net 30, Thank you for your business!"></textarea>
+                                            <label for="invoice-notes"><i class="fa-regular fa-comment-dots"></i> Notes
+                                                / Terms</label>
+                                            <textarea id="invoice-notes" rows="2"
+                                                placeholder="Terms: Net 30, Thank you for your business!"></textarea>
                                         </div>
                                     </div>
                                     <div class="invoice-totals-box">
-                                        <div class="total-row"><span>Subtotal:</span><span id="invoice-summary-subtotal">$0.00</span></div>
-                                        <div class="total-row"><span>Tax:</span><span id="invoice-summary-tax">$0.00</span></div>
-                                        <div class="total-row"><span>Discount:</span><span id="invoice-summary-discount">-$0.00</span></div>
-                                        <div class="total-row grand-total"><span>Grand Total:</span><span id="invoice-summary-total">$0.00</span></div>
+                                        <div class="total-row"><span>Subtotal:</span><span
+                                                id="invoice-summary-subtotal">$0.00</span></div>
+                                        <div class="total-row"><span>Tax:</span><span
+                                                id="invoice-summary-tax">$0.00</span></div>
+                                        <div class="total-row"><span>Discount:</span><span
+                                                id="invoice-summary-discount">-$0.00</span></div>
+                                        <div class="total-row grand-total"><span>Grand Total:</span><span
+                                                id="invoice-summary-total">$0.00</span></div>
                                     </div>
                                 </div>
 
                                 <div class="btn-group justify-end">
-                                    <button type="button" class="btn btn-outline" id="btn-invoice-cancel">Cancel</button>
+                                    <button type="button" class="btn btn-outline"
+                                        id="btn-invoice-cancel">Cancel</button>
                                     <button type="submit" class="btn btn-primary">Save Invoice & Render</button>
                                 </div>
                             </form>
@@ -845,11 +427,13 @@
                         <div class="card-header border-b flex-space-between print-hidden">
                             <h4>Invoice Viewer</h4>
                             <div class="btn-group">
-                                <button class="btn btn-primary" id="btn-invoice-print"><i class="fa-solid fa-print"></i> Print / Save PDF</button>
-                                <button class="btn btn-outline" id="btn-invoice-close-view"><i class="fa-solid fa-arrow-left"></i> Return</button>
+                                <button class="btn btn-primary" id="btn-invoice-print"><i class="fa-solid fa-print"></i>
+                                    Print / Save PDF</button>
+                                <button class="btn btn-outline" id="btn-invoice-close-view"><i
+                                        class="fa-solid fa-arrow-left"></i> Return</button>
                             </div>
                         </div>
-                        
+
                         <!-- Printable Paper Wrapper -->
                         <div id="invoice-paper" class="invoice-paper">
                             <div class="invoice-paper-header">
@@ -863,9 +447,11 @@
                                     <h1 class="invoice-title-text">INVOICE</h1>
                                     <div class="invoice-meta-fields">
                                         <div><strong>Invoice #:</strong> <span id="invoice-paper-number"></span></div>
-                                        <div><strong>Issue Date:</strong> <span id="invoice-paper-issue-date"></span></div>
+                                        <div><strong>Issue Date:</strong> <span id="invoice-paper-issue-date"></span>
+                                        </div>
                                         <div><strong>Due Date:</strong> <span id="invoice-paper-due-date"></span></div>
-                                        <div><strong>Status:</strong> <span id="invoice-paper-status" class="badge"></span></div>
+                                        <div><strong>Status:</strong> <span id="invoice-paper-status"
+                                                class="badge"></span></div>
                                     </div>
                                 </div>
                             </div>
@@ -907,133 +493,19 @@
                                     </div>
                                 </div>
                                 <div class="paper-totals-box">
-                                    <div class="p-row"><span>Subtotal:</span><span id="invoice-paper-subtotal">$0.00</span></div>
+                                    <div class="p-row"><span>Subtotal:</span><span
+                                            id="invoice-paper-subtotal">$0.00</span></div>
                                     <div class="p-row"><span>Tax:</span><span id="invoice-paper-tax">$0.00</span></div>
-                                    <div class="p-row"><span>Discount:</span><span id="invoice-paper-discount">-$0.00</span></div>
-                                    <div class="p-row p-grand-total"><span>Grand Total:</span><span id="invoice-paper-total">$0.00</span></div>
+                                    <div class="p-row"><span>Discount:</span><span
+                                            id="invoice-paper-discount">-$0.00</span></div>
+                                    <div class="p-row p-grand-total"><span>Grand Total:</span><span
+                                            id="invoice-paper-total">$0.00</span></div>
                                 </div>
                             </div>
 
                             <div class="print-footer-brand">
                                 Powered By <strong><em>VRTPocket</em></strong>
                             </div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- ==================== TAB: REPORTS ==================== -->
-                <section id="reports-tab" class="tab-pane">
-                    <div class="card glass">
-                        <div class="card-header border-b print-hidden">
-                            <h4>Financial Report Generator</h4>
-                        </div>
-                        <div class="card-body print-hidden">
-                            <form id="report-filter-form" class="app-form">
-                                <div class="layout-grid-3">
-                                    <div class="input-group">
-                                        <label for="report-start-date">Start Date *</label>
-                                        <input type="date" id="report-start-date" required>
-                                    </div>
-                                    <div class="input-group">
-                                        <label for="report-end-date">End Date *</label>
-                                        <input type="date" id="report-end-date" required>
-                                    </div>
-                                    <div class="input-group">
-                                        <label for="report-segment">Scope</label>
-                                        <select id="report-segment">
-                                            <option value="all" selected>All (Personal + Business + Investments)</option>
-                                            <option value="personal">Personal Operations Only</option>
-                                            <option value="business">Business Operations Only</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="btn-group justify-end">
-                                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-gears"></i> Compile Intelligence</button>
-                                    <button type="button" class="btn btn-outline" id="btn-print-report"><i class="fa-solid fa-print"></i> Export / Print Document</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-
-                    <!-- Printable Report Sheet -->
-                    <div id="report-document" class="report-document glass hidden">
-                        <!-- Cover Header -->
-                        <div class="report-doc-header">
-                            <div class="brand">
-                                <img id="report-company-logo" src="" alt="Company Logo" class="invoice-logo-print">
-                                <h1 id="report-company-name">Company Name</h1>
-                            </div>
-                            <div class="report-meta text-right">
-                                <h2>FINANCIAL SUMMARY STATEMENT</h2>
-                                <p>Generated on: <span id="report-gen-date">YYYY-MM-DD</span></p>
-                                <p>Period: <span id="report-period-text">All Time</span></p>
-                            </div>
-                        </div>
-
-                        <hr class="print-hr">
-
-                        <!-- High Level Aggregates -->
-                        <div class="report-grids">
-                            <div class="report-summary-card">
-                                <h5>Total Cash Inflow</h5>
-                                <h2 id="report-total-income" class="text-emerald">$0.00</h2>
-                            </div>
-                            <div class="report-summary-card">
-                                <h5>Total Cash Outflow</h5>
-                                <h2 id="report-total-expenses" class="text-rose">$0.00</h2>
-                            </div>
-                            <div class="report-summary-card">
-                                <h5>Net Operational Surplus</h5>
-                                <h2 id="report-net-surplus">$0.00</h2>
-                            </div>
-                            <div class="report-summary-card">
-                                <h5>Investment Value (ROI)</h5>
-                                <h2 id="report-investment-summary">$0.00 (0.00%)</h2>
-                            </div>
-                        </div>
-
-                        <!-- Data Breakdowns -->
-                        <div class="report-details-section">
-                            <h4>Financial Category Distribution</h4>
-                            <div class="table-wrapper">
-                                <table class="report-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Category</th>
-                                            <th>Classification</th>
-                                            <th>Type</th>
-                                            <th class="text-right">Total Transacted</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="report-distribution-body">
-                                        <!-- Dynamic report breakdown -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        <div class="report-details-section">
-                            <h4>Significant Transactions logged</h4>
-                            <div class="table-wrapper">
-                                <table class="report-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Date</th>
-                                            <th>Classification & Type</th>
-                                            <th>Title</th>
-                                            <th>Frequency</th>
-                                            <th class="text-right">Amount</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="report-transactions-body">
-                                        <!-- Dynamic report transactions -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        <div class="print-footer-brand">
-                            Powered By <strong><em>VRTPocket</em></strong>
                         </div>
                     </div>
                 </section>
@@ -1046,36 +518,42 @@
                         </div>
                         <div class="card-body">
                             <form id="profile-form" class="app-form">
-                                
-                                <!-- SECTION 1: Personal Details -->
+
+                                <!-- SECTION 1: Company Details & Settings -->
                                 <div class="settings-section-divider" style="margin-top: 0;">
-                                    <i class="fa-solid fa-user-tag"></i> Personal Details
+                                    <i class="fa-solid fa-building-circle-check"></i> Company Details & Settings
                                 </div>
 
                                 <div class="profile-avatar-upload">
                                     <div class="avatar-preview-box">
-                                        <img id="profile-avatar-preview" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%236366f1' d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E" alt="Avatar Preview">
+                                        <img id="profile-logo-preview"
+                                            src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%236366f1' d='M12 2L2 22h20L12 2z'/%3E%3C/svg%3E"
+                                            alt="Logo Preview">
                                     </div>
                                     <div class="avatar-upload-info">
-                                        <label for="profile-avatar-input" class="btn btn-accent"><i class="fa-solid fa-upload"></i> Upload Profile Picture</label>
-                                        <input type="file" id="profile-avatar-input" accept="image/*" class="hidden">
-                                        <p class="text-muted text-sm">Upload PNG, JPG, or WebP. This will show on your personal avatar.</p>
+                                        <label for="profile-logo-input" class="btn btn-outline"><i
+                                                class="fa-solid fa-upload"></i> Upload Company Logo</label>
+                                        <input type="file" id="profile-logo-input" accept="image/*" class="hidden">
+                                        <p class="text-muted text-sm">Upload PNG, JPG, or WebP. Used in invoice
+                                            generation.</p>
                                     </div>
                                 </div>
 
                                 <div class="input-group">
-                                    <label for="profile-personal-name">Full Name *</label>
-                                    <input type="text" id="profile-personal-name" required placeholder="John Doe">
+                                    <label for="profile-company-name">Company Name *</label>
+                                    <input type="text" id="profile-company-name" required placeholder="Acme Ltd.">
                                 </div>
 
                                 <div class="input-grid">
                                     <div class="input-group">
-                                        <label for="profile-personal-email">Personal Email *</label>
-                                        <input type="email" id="profile-personal-email" required placeholder="john.doe@gmail.com">
+                                        <label for="profile-company-email">Company Email *</label>
+                                        <input type="email" id="profile-company-email" required
+                                            placeholder="billing@company.com">
                                     </div>
                                     <div class="input-group">
-                                        <label for="profile-personal-phone">Contact Phone *</label>
-                                        <input type="text" id="profile-personal-phone" required placeholder="+1 (555) 012-3456">
+                                        <label for="profile-company-phone">Company Phone *</label>
+                                        <input type="text" id="profile-company-phone" required
+                                            placeholder="+1 (555) 012-3456">
                                     </div>
                                 </div>
 
@@ -1093,68 +571,29 @@
                                     </div>
                                 </div>
 
-                                <!-- SECTION 2: Company Toggle Switch -->
-                                <div class="switch-container">
-                                    <div class="switch-label-group">
-                                        <span class="switch-title"><i class="fa-solid fa-building"></i> Enable Company Features</span>
-                                        <span class="switch-desc">Unlocks business dashboards, invoices, corporate ledger, and business reports.</span>
-                                    </div>
-                                    <label class="switch">
-                                        <input type="checkbox" id="profile-company-toggle">
-                                        <span class="slider"></span>
-                                    </label>
+                                <div class="input-group">
+                                    <label for="profile-bank-details"><i class="fa-solid fa-building-columns"></i>
+                                        Default Bank Details (Auto-fills Payment Details on Invoices)</label>
+                                    <textarea id="profile-bank-details" rows="2"
+                                        placeholder="Bank Name: ABC Bank&#10;Account Number: 123-456-789&#10;SWIFT/IBAN: ..."></textarea>
                                 </div>
 
-                                <!-- SECTION 3: Company Details (Toggleable Container) -->
-                                <div id="profile-company-details-container" class="signup-form-step hidden">
-                                    <div class="settings-section-divider">
-                                        <i class="fa-solid fa-building-circle-check"></i> Company Details & Settings
-                                    </div>
-
-                                    <div class="profile-avatar-upload">
-                                        <div class="avatar-preview-box">
-                                            <img id="profile-logo-preview" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%236366f1' d='M12 2L2 22h20L12 2z'/%3E%3C/svg%3E" alt="Logo Preview">
-                                        </div>
-                                        <div class="avatar-upload-info">
-                                            <label for="profile-logo-input" class="btn btn-outline"><i class="fa-solid fa-upload"></i> Upload Company Logo</label>
-                                            <input type="file" id="profile-logo-input" accept="image/*" class="hidden">
-                                            <p class="text-muted text-sm">Upload PNG, JPG, or WebP. Used in invoice generation.</p>
-                                        </div>
-                                    </div>
-
-                                    <div class="input-group">
-                                        <label for="profile-company-name">Company Name *</label>
-                                        <input type="text" id="profile-company-name" placeholder="Acme Ltd.">
-                                    </div>
-
-                                    <div class="input-grid">
-                                        <div class="input-group">
-                                            <label for="profile-company-email">Company Email *</label>
-                                            <input type="email" id="profile-company-email" placeholder="billing@company.com">
-                                        </div>
-                                        <div class="input-group">
-                                            <label for="profile-company-phone">Company Phone *</label>
-                                            <input type="text" id="profile-company-phone" placeholder="+1 (555) 012-3456">
-                                        </div>
-                                    </div>
-
-                                    <div class="input-group">
-                                        <label for="profile-bank-details"><i class="fa-solid fa-building-columns"></i> Default Bank Details (Auto-fills Payment Details on Invoices)</label>
-                                        <textarea id="profile-bank-details" rows="2" placeholder="Bank Name: ABC Bank&#10;Account Number: 123-456-789&#10;SWIFT/IBAN: ..."></textarea>
-                                    </div>
-
-                                    <div class="input-group">
-                                        <label for="profile-invoice-notes-terms"><i class="fa-regular fa-comment-dots"></i> Default Invoice Notes / Terms (Auto-fills Notes / Terms on Invoices)</label>
-                                        <textarea id="profile-invoice-notes-terms" rows="2" placeholder="Terms: Net 30, Thank you for your business!"></textarea>
-                                    </div>
-
-                                    <div class="input-group">
-                                        <label for="profile-company-address">Billing Address *</label>
-                                        <textarea id="profile-company-address" rows="3" placeholder="Suite 404, Corporate Tower..."></textarea>
-                                    </div>
+                                <div class="input-group">
+                                    <label for="profile-invoice-notes-terms"><i
+                                            class="fa-regular fa-comment-dots"></i> Default Invoice Notes / Terms
+                                        (Auto-fills Notes / Terms on Invoices)</label>
+                                    <textarea id="profile-invoice-notes-terms" rows="2"
+                                        placeholder="Terms: Net 30, Thank you for your business!"></textarea>
                                 </div>
 
-                                <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">Update Profile Settings <i class="fa-solid fa-circle-check"></i></button>
+                                <div class="input-group">
+                                    <label for="profile-company-address">Billing Address *</label>
+                                    <textarea id="profile-company-address" required rows="3"
+                                        placeholder="Suite 404, Corporate Tower..."></textarea>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">Update Profile
+                                    Settings <i class="fa-solid fa-circle-check"></i></button>
                             </form>
                         </div>
                     </div>
@@ -1168,10 +607,15 @@
                         </div>
                         <div class="card-body">
                             <!-- Full Screen Option -->
-                            <div class="switch-container" style="display: flex; justify-content: space-between; align-items: center;">
+                            <div class="switch-container"
+                                style="display: flex; justify-content: space-between; align-items: center;">
                                 <div class="switch-label-group">
-                                    <span class="switch-title" style="display: flex; align-items: center; gap: 0.5rem; font-weight: 600; color: var(--text-primary);"><i class="fa-solid fa-expand"></i> Enable Full Screen Mode</span>
-                                    <span class="switch-desc" style="display: block; font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">Maximize the workspace to fill the entire monitor.</span>
+                                    <span class="switch-title"
+                                        style="display: flex; align-items: center; gap: 0.5rem; font-weight: 600; color: var(--text-primary);"><i
+                                            class="fa-solid fa-expand"></i> Enable Full Screen Mode</span>
+                                    <span class="switch-desc"
+                                        style="display: block; font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">Maximize
+                                        the workspace to fill the entire monitor.</span>
                                 </div>
                                 <label class="switch">
                                     <input type="checkbox" id="display-fullscreen-toggle">
@@ -1183,16 +627,29 @@
                             <div class="settings-section-divider" style="margin-top: 2rem;">
                                 <i class="fa-solid fa-magnifying-glass-plus"></i> Workspace Zoom Controls
                             </div>
-                            <div class="zoom-controls-container" style="display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; background: rgba(255, 255, 255, 0.01); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-glass);">
+                            <div class="zoom-controls-container"
+                                style="display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; background: rgba(255, 255, 255, 0.01); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-glass);">
                                 <div class="zoom-info">
-                                    <span class="switch-title" style="display: block; font-weight: 600; color: var(--text-primary);">Adjust Zoom Scale</span>
-                                    <span class="switch-desc" style="display: block; font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">Adjust scaling of text and UI blocks.</span>
+                                    <span class="switch-title"
+                                        style="display: block; font-weight: 600; color: var(--text-primary);">Adjust
+                                        Zoom Scale</span>
+                                    <span class="switch-desc"
+                                        style="display: block; font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">Adjust
+                                        scaling of text and UI blocks.</span>
                                 </div>
                                 <div class="zoom-actions" style="display: flex; align-items: center; gap: 1rem;">
-                                    <button type="button" class="btn btn-outline btn-sm" id="btn-zoom-out" title="Zoom Out" style="width: 36px; height: 36px; padding: 0; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-minus"></i></button>
-                                    <span id="zoom-percentage-val" class="font-bold text-lg" style="min-width: 60px; text-align: center; font-size: 1.1rem; color: var(--text-primary);">100%</span>
-                                    <button type="button" class="btn btn-outline btn-sm" id="btn-zoom-in" title="Zoom In" style="width: 36px; height: 36px; padding: 0; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-plus"></i></button>
-                                    <button type="button" class="btn btn-outline btn-accent btn-sm" id="btn-zoom-reset" style="padding: 0.4rem 1rem;">Reset</button>
+                                    <button type="button" class="btn btn-outline btn-sm" id="btn-zoom-out"
+                                        title="Zoom Out"
+                                        style="width: 36px; height: 36px; padding: 0; display: flex; align-items: center; justify-content: center;"><i
+                                            class="fa-solid fa-minus"></i></button>
+                                    <span id="zoom-percentage-val" class="font-bold text-lg"
+                                        style="min-width: 60px; text-align: center; font-size: 1.1rem; color: var(--text-primary);">100%</span>
+                                    <button type="button" class="btn btn-outline btn-sm" id="btn-zoom-in"
+                                        title="Zoom In"
+                                        style="width: 36px; height: 36px; padding: 0; display: flex; align-items: center; justify-content: center;"><i
+                                            class="fa-solid fa-plus"></i></button>
+                                    <button type="button" class="btn btn-outline btn-accent btn-sm" id="btn-zoom-reset"
+                                        style="padding: 0.4rem 1rem;">Reset</button>
                                 </div>
                             </div>
                         </div>
@@ -1204,454 +661,6 @@
 
     <!-- ==================== MODALS SECTION ==================== -->
 
-    <!-- Personal Income Modal -->
-    <div id="personal-income-modal" class="modal-overlay hidden">
-        <div class="modal-card glass">
-            <div class="modal-header">
-                <h4 id="personal-income-modal-title">Log Personal Income</h4>
-                <div class="flex items-center gap-2" style="display: flex; align-items: center;">
-                    <button type="button" class="btn btn-xs btn-outline" id="btn-fetch-personal-income" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; border-radius: var(--radius-sm);"><i class="fa-solid fa-cloud-arrow-down"></i> Fetch Data</button>
-                    <button type="button" class="btn-close" id="close-p-income-modal" style="margin-left: 0.5rem;">&times;</button>
-                </div>
-            </div>
-            <form id="personal-income-form" class="app-form">
-                <input type="hidden" id="personal-income-id">
-                <div class="input-group">
-                    <label for="personal-income-title">Source / Title *</label>
-                    <input type="text" id="personal-income-title" required placeholder="Salary, Consultancy, Dividends">
-                </div>
-                <div class="input-grid">
-                    <div class="input-group">
-                        <label for="personal-income-amount">Amount *</label>
-                        <input type="number" id="personal-income-amount" step="0.01" required placeholder="0.00">
-                    </div>
-                    <div class="input-group">
-                        <label for="personal-income-currency-label">Currency</label>
-                        <input type="text" class="form-control-disabled" id="personal-income-currency-label" readonly value="USD">
-                    </div>
-                </div>
-                <div class="input-grid">
-                    <div class="input-group">
-                        <label for="personal-income-frequency">Frequency</label>
-                        <select id="personal-income-frequency">
-                            <option value="one-time">One-time</option>
-                            <option value="monthly">Monthly</option>
-                            <option value="yearly">Yearly</option>
-                        </select>
-                    </div>
-                    <div class="input-group">
-                        <label for="personal-income-date">Date Received *</label>
-                        <input type="date" id="personal-income-date" required>
-                    </div>
-                </div>
-                <div class="input-group">
-                    <label for="personal-income-category">Category</label>
-                    <select id="personal-income-category">
-                        <option value="Salary">Salary</option>
-                        <option value="Investments">Investments</option>
-                        <option value="Gifts">Gifts</option>
-                        <option value="Side Hustle">Side Hustle</option>
-                        <option value="Other">Other</option>
-                    </select>
-                </div>
-                <div class="input-group">
-                    <label for="personal-income-notes">Memo Notes</label>
-                    <textarea id="personal-income-notes" rows="2" placeholder="Additional ledger details..."></textarea>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline" id="btn-close-p-income-form">Discard</button>
-                    <button type="submit" class="btn btn-primary">Save Income</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Personal Expense Modal -->
-    <div id="personal-expense-modal" class="modal-overlay hidden">
-        <div class="modal-card glass">
-            <div class="modal-header">
-                <h4 id="personal-expense-modal-title">Log Personal Expense</h4>
-                <div class="flex items-center gap-2" style="display: flex; align-items: center;">
-                    <button type="button" class="btn btn-xs btn-outline" id="btn-fetch-personal-expense" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; border-radius: var(--radius-sm);"><i class="fa-solid fa-cloud-arrow-down"></i> Fetch Data</button>
-                    <button type="button" class="btn-close" id="close-p-expense-modal" style="margin-left: 0.5rem;">&times;</button>
-                </div>
-            </div>
-            <form id="personal-expense-form" class="app-form">
-                <input type="hidden" id="personal-expense-id">
-                <div class="input-group">
-                    <label for="personal-expense-title">Expense Title *</label>
-                    <input type="text" id="personal-expense-title" required placeholder="Rent, Netflix, Grocery">
-                </div>
-                <div class="input-grid">
-                    <div class="input-group">
-                        <label for="personal-expense-amount">Cost Amount *</label>
-                        <input type="number" id="personal-expense-amount" step="0.01" required placeholder="0.00">
-                    </div>
-                    <div class="input-group">
-                        <label for="personal-expense-date">Date / Start Date *</label>
-                        <input type="date" id="personal-expense-date" required>
-                    </div>
-                </div>
-                <div class="input-grid">
-                    <div class="input-group">
-                        <label for="personal-expense-frequency">Billing Cycle</label>
-                        <select id="personal-expense-frequency">
-                            <option value="one-time">One-time</option>
-                            <option value="monthly">Monthly</option>
-                            <option value="yearly">Yearly</option>
-                        </select>
-                    </div>
-                    <div class="input-group">
-                        <label for="personal-expense-category">Category</label>
-                        <select id="personal-expense-category">
-                            <option value="Housing">Housing</option>
-                            <option value="Food">Food</option>
-                            <option value="Transport">Transport</option>
-                            <option value="Entertainment">Entertainment</option>
-                            <option value="Utilities">Utilities</option>
-                            <option value="Health">Health</option>
-                            <option value="Other">Other</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="input-group-row">
-                    <input type="checkbox" id="personal-expense-is-subscription" class="form-checkbox">
-                    <label for="personal-expense-is-subscription" class="checkbox-label">Flag as recurring Subscription</label>
-                </div>
-                <!-- Subscription Sub-settings wrapper -->
-                <div id="personal-expense-subscription-sub-settings" class="hidden" style="border-left: 2px solid var(--primary); padding-left: 1rem; margin-bottom: 1rem;">
-                    <div class="input-group">
-                        <label>Subscription Status</label>
-                        <div style="display: flex; align-items: center; gap: 0.5rem;">
-                            <select id="personal-expense-sub-status" style="width: 150px;">
-                                <option value="subscribe" selected>Subscribe</option>
-                                <option value="unsubscribe">Unsubscribe</option>
-                            </select>
-                            <span id="personal-expense-status-badge" class="badge status-paid">Subscribed</span>
-                        </div>
-                    </div>
-                    <div id="personal-expense-unsubscribe-date-wrapper" class="input-group hidden">
-                        <label for="personal-expense-unsubscribe-date">Unsubscribe Date</label>
-                        <input type="date" id="personal-expense-unsubscribe-date">
-                    </div>
-                </div>
-                <div class="input-group">
-                    <label for="personal-expense-notes">Notes</label>
-                    <textarea id="personal-expense-notes" rows="2" placeholder="Remarks..."></textarea>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline" id="btn-close-p-expense-form">Discard</button>
-                    <button type="submit" class="btn btn-primary">Save Expense</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Business Income Modal -->
-    <div id="business-income-modal" class="modal-overlay hidden">
-        <div class="modal-card glass">
-            <div class="modal-header">
-                <h4 id="business-income-modal-title">Log Business Revenue</h4>
-                <div class="flex items-center gap-2" style="display: flex; align-items: center;">
-                    <button type="button" class="btn btn-xs btn-outline" id="btn-fetch-business-income" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; border-radius: var(--radius-sm);"><i class="fa-solid fa-cloud-arrow-down"></i> Fetch Data</button>
-                    <button type="button" class="btn-close" id="close-b-income-modal" style="margin-left: 0.5rem;">&times;</button>
-                </div>
-            </div>
-            <form id="business-income-form" class="app-form">
-                <input type="hidden" id="business-income-id">
-                <div class="input-group">
-                    <label for="business-income-title">Revenue Title *</label>
-                    <input type="text" id="business-income-title" required placeholder="Project Consulting, Product Sales">
-                </div>
-                <div class="input-grid">
-                    <div class="input-group">
-                        <label for="business-income-amount">Amount *</label>
-                        <input type="number" id="business-income-amount" step="0.01" required placeholder="0.00">
-                    </div>
-                    <div class="input-group">
-                        <label for="business-income-date">Date Received *</label>
-                        <input type="date" id="business-income-date" required>
-                    </div>
-                </div>
-                <div class="input-grid">
-                    <div class="input-group">
-                        <label for="business-income-frequency">Payment Frequency</label>
-                        <select id="business-income-frequency">
-                            <option value="one-time">One-time</option>
-                            <option value="monthly">Monthly</option>
-                            <option value="yearly">Yearly</option>
-                        </select>
-                    </div>
-                    <div class="input-group">
-                        <label for="business-income-category">Classification</label>
-                        <select id="business-income-category">
-                            <option value="Services">Services</option>
-                            <option value="Products">Products</option>
-                            <option value="Consulting">Consulting</option>
-                            <option value="Royalties">Royalties</option>
-                            <option value="Other">Other</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="input-group">
-                    <label for="business-income-notes">Ledger Memo</label>
-                    <textarea id="business-income-notes" rows="2" placeholder="Client details, references..."></textarea>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline" id="btn-close-b-income-form">Discard</button>
-                    <button type="submit" class="btn btn-primary">Save Revenue</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Business Expense Modal -->
-    <div id="business-expense-modal" class="modal-overlay hidden">
-        <div class="modal-card glass">
-            <div class="modal-header">
-                <h4 id="business-expense-modal-title">Log Business Expense</h4>
-                <div class="flex items-center gap-2" style="display: flex; align-items: center;">
-                    <button type="button" class="btn btn-xs btn-outline" id="btn-fetch-business-expense" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; border-radius: var(--radius-sm);"><i class="fa-solid fa-cloud-arrow-down"></i> Fetch Data</button>
-                    <button type="button" class="btn-close" id="close-b-expense-modal" style="margin-left: 0.5rem;">&times;</button>
-                </div>
-            </div>
-            <form id="business-expense-form" class="app-form">
-                <input type="hidden" id="business-expense-id">
-                <div class="input-group">
-                    <label for="business-expense-title">Expense Title *</label>
-                    <input type="text" id="business-expense-title" required placeholder="AWS Cloud, SaaS, Office Rent">
-                </div>
-                <div class="input-grid">
-                    <div class="input-group">
-                        <label for="business-expense-amount">Cost Amount *</label>
-                        <input type="number" id="business-expense-amount" step="0.01" required placeholder="0.00">
-                    </div>
-                    <div class="input-group">
-                        <label for="business-expense-date">Expense Date *</label>
-                        <input type="date" id="business-expense-date" required>
-                    </div>
-                </div>
-                <div class="input-grid">
-                    <div class="input-group">
-                        <label for="business-expense-frequency">Billing Interval</label>
-                        <select id="business-expense-frequency">
-                            <option value="one-time">One-time</option>
-                            <option value="monthly">Monthly</option>
-                            <option value="yearly">Yearly</option>
-                        </select>
-                    </div>
-                    <div class="input-group">
-                        <label for="business-expense-category">Business Category</label>
-                        <select id="business-expense-category">
-                            <option value="Software/SaaS">Software/SaaS</option>
-                            <option value="Office Supply">Office Supply</option>
-                            <option value="Marketing">Marketing</option>
-                            <option value="Rent">Rent</option>
-                            <option value="Travel">Travel</option>
-                            <option value="Tax">Tax</option>
-                            <option value="Other">Other</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="input-group-row">
-                    <input type="checkbox" id="business-expense-is-subscription" class="form-checkbox">
-                    <label for="business-expense-is-subscription" class="checkbox-label">Flag as recurring Subscription</label>
-                </div>
-                <!-- Subscription Sub-settings wrapper -->
-                <div id="business-expense-subscription-sub-settings" class="hidden" style="border-left: 2px solid var(--primary); padding-left: 1rem; margin-bottom: 1rem;">
-                    <div class="input-group">
-                        <label>Subscription Status</label>
-                        <div style="display: flex; align-items: center; gap: 0.5rem;">
-                            <select id="business-expense-sub-status" style="width: 150px;">
-                                <option value="subscribe" selected>Subscribe</option>
-                                <option value="unsubscribe">Unsubscribe</option>
-                            </select>
-                            <span id="business-expense-status-badge" class="badge status-paid">Subscribed</span>
-                        </div>
-                    </div>
-                    <div id="business-expense-unsubscribe-date-wrapper" class="input-group hidden">
-                        <label for="business-expense-unsubscribe-date">Unsubscribe Date</label>
-                        <input type="date" id="business-expense-unsubscribe-date">
-                    </div>
-                </div>
-                <div class="input-group">
-                    <label for="business-expense-notes">Notes / Vendor details</label>
-                    <textarea id="business-expense-notes" rows="2" placeholder="SaaS account details, receipts references..."></textarea>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline" id="btn-close-b-expense-form">Discard</button>
-                    <button type="submit" class="btn btn-primary">Save Expense</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Investment Asset Modal -->
-    <div id="investment-modal" class="modal-overlay hidden">
-        <div class="modal-card glass">
-            <div class="modal-header">
-                <h4 id="investment-modal-title">Log Investment Asset</h4>
-                <button class="btn-close" id="close-investment-modal">&times;</button>
-            </div>
-            <form id="investment-form" class="app-form">
-                <input type="hidden" id="investment-id">
-                <div class="input-group">
-                    <label for="investment-name">Asset Name *</label>
-                    <input type="text" id="investment-name" required placeholder="Bitcoin, S&P 500 Index, Tesla Stock">
-                </div>
-                <div class="input-grid">
-                    <div class="input-group">
-                        <label for="investment-type">Asset Class</label>
-                        <select id="investment-type">
-                            <option value="Crypto">Crypto</option>
-                            <option value="Stocks">Stocks</option>
-                            <option value="Real Estate">Real Estate</option>
-                            <option value="Mutual Funds">Mutual Funds</option>
-                            <option value="Bonds">Bonds</option>
-                            <option value="Other">Other</option>
-                        </select>
-                    </div>
-                    <div class="input-group">
-                        <label for="investment-purchase-date">Purchase Date *</label>
-                        <input type="date" id="investment-purchase-date" required>
-                    </div>
-                </div>
-                <div class="input-grid">
-                    <div class="input-group">
-                        <label for="investment-initial">Initial Invested Capital *</label>
-                        <input type="number" id="investment-initial" step="0.01" required placeholder="0.00">
-                    </div>
-                    <div class="input-group">
-                        <label for="investment-current">Current Valuation *</label>
-                        <input type="number" id="investment-current" step="0.01" required placeholder="0.00">
-                    </div>
-                </div>
-                <div class="input-group">
-                    <label for="investment-notes">Asset details / Wallet Address / Account</label>
-                    <textarea id="investment-notes" rows="2" placeholder="Wallet or brokerage account notes..."></textarea>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline" id="btn-close-investment-form">Discard</button>
-                    <button type="submit" class="btn btn-primary">Save Asset</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Investment Expense / Transaction Fee Modal -->
-    <div id="investment-expense-modal" class="modal-overlay hidden">
-        <div class="modal-card glass">
-            <div class="modal-header">
-                <h4>Log Asset Expense / Fee</h4>
-                <button class="btn-close" id="close-investment-expense-modal">&times;</button>
-            </div>
-            <form id="investment-expense-form" class="app-form">
-                <div class="input-group">
-                    <label for="investment-expense-asset-id">Target Investment Asset *</label>
-                    <select id="investment-expense-asset-id" required>
-                        <!-- Filled dynamically from JavaScript -->
-                    </select>
-                </div>
-                <div class="input-group">
-                    <label for="investment-expense-title">Expense / Fee Title *</label>
-                    <input type="text" id="investment-expense-title" required placeholder="Broker commission, Gas fee, Management tax">
-                </div>
-                <div class="input-grid">
-                    <div class="input-group">
-                        <label for="investment-expense-amount">Fee Amount *</label>
-                        <input type="number" id="investment-expense-amount" step="0.01" required placeholder="0.00">
-                    </div>
-                    <div class="input-group">
-                        <label for="investment-expense-date">Date Paid *</label>
-                        <input type="date" id="investment-expense-date" required>
-                    </div>
-                </div>
-                <div class="input-group">
-                    <label for="investment-expense-type">Fee Type</label>
-                    <select id="investment-expense-type">
-                        <option value="fee">Brokerage/Transaction Fee</option>
-                        <option value="tax">Tax</option>
-                        <option value="maintenance">Maintenance Costs</option>
-                        <option value="other">Other Outflow</option>
-                    </select>
-                </div>
-                <div class="input-group">
-                    <label for="investment-expense-notes">Notes</label>
-                    <textarea id="investment-expense-notes" rows="2" placeholder="Fee receipts references..."></textarea>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline" id="btn-close-investment-expense-form">Discard</button>
-                    <button type="submit" class="btn btn-primary">Save Fee</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Select Month Modal Popup -->
-    <div id="dashboard-month-modal" class="modal-overlay hidden">
-        <div class="modal-card glass" style="max-width: 400px;">
-            <div class="modal-header">
-                <h4>Select Month / Year</h4>
-                <button class="btn-close" id="close-dashboard-month-modal">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="input-group">
-                    <label for="dashboard-month-picker">Filter Month *</label>
-                    <input type="month" id="dashboard-month-picker" class="form-control" required>
-                    <span class="input-help">Pick a month and year to filter dashboard datasets.</span>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline" id="btn-cancel-dashboard-month">Cancel</button>
-                <button type="button" class="btn btn-primary" id="btn-apply-dashboard-month">Apply Filter</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Autofill Template Selection Modal -->
-    <div id="autofill-modal" class="modal-overlay hidden" style="z-index: 2000;">
-        <div class="modal-card glass" style="max-width: 500px;">
-            <div class="modal-header">
-                <h4>Autofill Transaction Data</h4>
-                <button class="btn-close" id="close-autofill-modal">&times;</button>
-            </div>
-            <div class="modal-body">
-                <!-- Phase 1: Choose Interval -->
-                <div id="autofill-frequency-selector" class="flex gap-4 mb-4" style="display: flex; gap: 1rem;">
-                    <button type="button" class="btn btn-outline flex-1" id="btn-autofill-monthly" style="flex: 1; padding: 1.5rem; text-align: center; border-radius: var(--radius-md);">
-                        <i class="fa-solid fa-calendar-days fa-2x" style="display: block; margin-bottom: 0.5rem;"></i> Monthly Previous Data
-                    </button>
-                    <button type="button" class="btn btn-outline flex-1" id="btn-autofill-yearly" style="flex: 1; padding: 1.5rem; text-align: center; border-radius: var(--radius-md);">
-                        <i class="fa-solid fa-calendar-minus fa-2x" style="display: block; margin-bottom: 0.5rem;"></i> Yearly Previous Data
-                    </button>
-                </div>
-                
-                <!-- Phase 2: Selection List -->
-                <div id="autofill-list-wrapper" class="hidden">
-                    <h5 class="mb-3 text-muted">Select a record to auto-fill your form:</h5>
-                    <div class="table-wrapper" style="max-height: 250px; overflow-y: auto; border: 1px solid var(--border-glass); border-radius: var(--radius-sm);">
-                        <table class="data-table" style="font-size: 0.85rem; width: 100%;">
-                            <thead>
-                                <tr>
-                                    <th>Title</th>
-                                    <th>Category</th>
-                                    <th>Amount</th>
-                                    <th class="text-right">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="autofill-list-body">
-                                <!-- Autofill records list -->
-                            </tbody>
-                        </table>
-                    </div>
-                    <button type="button" class="btn btn-outline btn-sm w-full mt-4" id="btn-autofill-back-to-frequency" style="width: 100%; border-radius: var(--radius-sm);">
-                        <i class="fa-solid fa-chevron-left"></i> Back
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Fetch Previous Invoice Modal -->
     <div id="invoice-fetch-modal" class="modal-overlay hidden" style="z-index: 2100;">
         <div class="modal-card glass" style="max-width: 600px;">
@@ -1660,11 +669,16 @@
                 <button type="button" class="btn-close" id="close-invoice-fetch-modal">&times;</button>
             </div>
             <div class="modal-body" style="padding: 1rem; display: flex; flex-direction: column; gap: 1rem;">
-                <p class="text-muted text-sm" style="font-size: 0.85rem; margin: 0;">Select a previous invoice to autofill the form. This will import client details, line items, and payment details. <strong>Invoice Number, Issue Date, and Due Date will NOT be overwritten.</strong></p>
+                <p class="text-muted text-sm" style="font-size: 0.85rem; margin: 0;">Select a previous invoice to
+                    autofill the form. This will import client details, line items, and payment details. <strong>Invoice
+                        Number, Issue Date, and Due Date will NOT be overwritten.</strong></p>
                 <div class="input-group" style="margin: 0;">
-                    <input type="text" id="invoice-fetch-search-input" placeholder="Search by Client Name or Invoice Number..." style="padding: 0.5rem; width: 100%; font-size: 0.9rem;">
+                    <input type="text" id="invoice-fetch-search-input"
+                        placeholder="Search by Client Name or Invoice Number..."
+                        style="padding: 0.5rem; width: 100%; font-size: 0.9rem;">
                 </div>
-                <div style="max-height: 250px; overflow-y: auto; border: 1px solid var(--border-glass); border-radius: var(--radius-sm); background: var(--bg-glass-dark);">
+                <div
+                    style="max-height: 250px; overflow-y: auto; border: 1px solid var(--border-glass); border-radius: var(--radius-sm); background: var(--bg-glass-dark);">
                     <table class="data-table" style="font-size: 0.85rem; width: 100%;">
                         <thead>
                             <tr>
@@ -1694,11 +708,14 @@
                 <button type="button" class="btn-close" id="close-invoice-client-fetch-modal">&times;</button>
             </div>
             <div class="modal-body" style="padding: 1rem; display: flex; flex-direction: column; gap: 1rem;">
-                <p class="text-muted text-sm" style="font-size: 0.85rem; margin: 0;">Select a client from previous invoices to autofill the client details section.</p>
+                <p class="text-muted text-sm" style="font-size: 0.85rem; margin: 0;">Select a client from previous
+                    invoices to autofill the client details section.</p>
                 <div class="input-group" style="margin: 0;">
-                    <input type="text" id="invoice-client-search-input" placeholder="Search by Client Name or Email..." style="padding: 0.5rem; width: 100%; font-size: 0.9rem;">
+                    <input type="text" id="invoice-client-search-input" placeholder="Search by Client Name or Email..."
+                        style="padding: 0.5rem; width: 100%; font-size: 0.9rem;">
                 </div>
-                <div style="max-height: 250px; overflow-y: auto; border: 1px solid var(--border-glass); border-radius: var(--radius-sm); background: var(--bg-glass-dark);">
+                <div
+                    style="max-height: 250px; overflow-y: auto; border: 1px solid var(--border-glass); border-radius: var(--radius-sm); background: var(--bg-glass-dark);">
                     <table class="data-table" style="font-size: 0.85rem; width: 100%;">
                         <thead>
                             <tr>
@@ -1722,16 +739,19 @@
 
     <!-- Invoice Quick Preview Popup Modal -->
     <div id="invoice-preview-popup-modal" class="modal-overlay hidden" style="z-index: 2200;">
-        <div class="modal-card glass" style="max-width: 800px; width: 90%; max-height: 90vh; display: flex; flex-direction: column;">
+        <div class="modal-card glass"
+            style="max-width: 800px; width: 90%; max-height: 90vh; display: flex; flex-direction: column;">
             <div class="modal-header">
                 <h4>Invoice Quick Preview</h4>
                 <button type="button" class="btn-close" id="close-invoice-preview-popup-modal">&times;</button>
             </div>
             <div class="modal-body" style="padding: 1rem; overflow-y: auto; flex-grow: 1; background: #0f172a;">
-                <div id="popup-invoice-paper" class="invoice-paper" style="box-shadow: none; padding: 1.5rem; margin: 0; background: #ffffff;">
+                <div id="popup-invoice-paper" class="invoice-paper"
+                    style="box-shadow: none; padding: 1.5rem; margin: 0; background: #ffffff;">
                     <div class="invoice-paper-header">
                         <div class="invoice-company-side">
-                            <img id="popup-invoice-paper-logo" src="" alt="Company Logo" class="invoice-logo-print hidden">
+                            <img id="popup-invoice-paper-logo" src="" alt="Company Logo"
+                                class="invoice-logo-print hidden">
                             <h2 id="popup-invoice-paper-company-name">Company Name</h2>
                             <p id="popup-invoice-paper-company-address"></p>
                             <p id="popup-invoice-paper-company-contact"></p>
@@ -1740,9 +760,11 @@
                             <h1 class="invoice-title-text">INVOICE</h1>
                             <div class="invoice-meta-fields">
                                 <div><strong>Invoice #:</strong> <span id="popup-invoice-paper-number"></span></div>
-                                <div><strong>Issue Date:</strong> <span id="popup-invoice-paper-issue-date"></span></div>
+                                <div><strong>Issue Date:</strong> <span id="popup-invoice-paper-issue-date"></span>
+                                </div>
                                 <div><strong>Due Date:</strong> <span id="popup-invoice-paper-due-date"></span></div>
-                                <div><strong>Status:</strong> <span id="popup-invoice-paper-status" class="badge"></span></div>
+                                <div><strong>Status:</strong> <span id="popup-invoice-paper-status"
+                                        class="badge"></span></div>
                             </div>
                         </div>
                     </div>
@@ -1780,17 +802,21 @@
                             </div>
                         </div>
                         <div class="paper-totals-box">
-                            <div class="p-row"><span>Subtotal:</span><span id="popup-invoice-paper-subtotal">$0.00</span></div>
+                            <div class="p-row"><span>Subtotal:</span><span
+                                    id="popup-invoice-paper-subtotal">$0.00</span></div>
                             <div class="p-row"><span>Tax:</span><span id="popup-invoice-paper-tax">$0.00</span></div>
-                            <div class="p-row"><span>Discount:</span><span id="popup-invoice-paper-discount">-$0.00</span></div>
-                            <div class="p-row p-grand-total"><span>Grand Total:</span><span id="popup-invoice-paper-total">$0.00</span></div>
+                            <div class="p-row"><span>Discount:</span><span
+                                    id="popup-invoice-paper-discount">-$0.00</span></div>
+                            <div class="p-row p-grand-total"><span>Grand Total:</span><span
+                                    id="popup-invoice-paper-total">$0.00</span></div>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="modal-footer" style="padding: 1rem; display: flex; gap: 0.5rem; justify-content: right;">
                 <button type="button" class="btn btn-outline" id="btn-close-invoice-preview-popup-modal">Close</button>
-                <button type="button" class="btn btn-primary" id="btn-select-invoice-from-preview-popup">Select & Autofill</button>
+                <button type="button" class="btn btn-primary" id="btn-select-invoice-from-preview-popup">Select &
+                    Autofill</button>
             </div>
         </div>
     </div>
@@ -1798,4 +824,5 @@
     <!-- Application Script -->
     <script src="app.js"></script>
 </body>
+
 </html>
