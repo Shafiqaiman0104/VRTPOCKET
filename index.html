@@ -212,6 +212,9 @@
                 <a href="#invoices" class="nav-link" data-tab="invoices-tab">
                     <i class="fa-solid fa-file-invoice-dollar"></i> <span>Invoice Suite</span>
                 </a>
+                <a href="#reminders" class="nav-link" data-tab="reminders-tab">
+                    <i class="fa-solid fa-bell"></i> <span>Reminders Suite</span>
+                </a>
                 <div class="nav-section-title">Settings</div>
                 <a href="#profile" class="nav-link" data-tab="profile-tab">
                     <i class="fa-solid fa-sliders"></i> <span>System Settings</span>
@@ -730,6 +733,161 @@
                         </div>
                     </div>
                 </section>
+
+                <!-- ==================== TAB: REMINDERS SUITE ==================== -->
+                <section id="reminders-tab" class="tab-pane">
+                    <!-- Sub Navigation Tabs -->
+                    <div class="sub-tab-nav" style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-glass); padding-bottom: 0.5rem; flex-wrap: wrap;">
+                        <button type="button" class="btn btn-sm btn-outline sub-tab-btn active" data-subtab="reminders-sub-dashboard"><i class="fa-solid fa-chart-line"></i> Dashboard View</button>
+                        <button type="button" class="btn btn-sm btn-outline sub-tab-btn" data-subtab="reminders-sub-list"><i class="fa-solid fa-list-check"></i> My Reminders</button>
+                        <button type="button" class="btn btn-sm btn-outline sub-tab-btn" data-subtab="reminders-sub-log"><i class="fa-solid fa-clipboard-list"></i> Reminders Log</button>
+                    </div>
+
+                    <!-- Sub-pane 1: Dashboard -->
+                    <div id="reminders-sub-dashboard" class="sub-tab-pane">
+                        <div class="dashboard-grid">
+                            <!-- Card: Overdue logs -->
+                            <div class="stat-card glass glow-rose">
+                                <div class="stat-icon icon-overdue"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                                <div class="stat-info">
+                                    <span class="stat-label">Overdue Items</span>
+                                    <h3 class="stat-value text-rose" id="reminders-dashboard-overdue-count">0</h3>
+                                    <span class="stat-subtext" id="reminders-dashboard-overdue-amount">Value: $0.00</span>
+                                </div>
+                            </div>
+                            <!-- Card: Upcoming Expenses -->
+                            <div class="stat-card glass glow-amber">
+                                <div class="stat-icon icon-pending"><i class="fa-solid fa-file-invoice"></i></div>
+                                <div class="stat-info">
+                                    <span class="stat-label">Upcoming Expenses</span>
+                                    <h3 class="stat-value" id="reminders-dashboard-expense-amount">$0.00</h3>
+                                    <span class="stat-subtext text-amber" id="reminders-dashboard-expense-count">0 Pending logs</span>
+                                </div>
+                            </div>
+                            <!-- Card: Upcoming Incomes -->
+                            <div class="stat-card glass glow-emerald">
+                                <div class="stat-icon icon-paid"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+                                <div class="stat-info">
+                                    <span class="stat-label">Upcoming Incomes</span>
+                                    <h3 class="stat-value" id="reminders-dashboard-income-amount">$0.00</h3>
+                                    <span class="stat-subtext text-emerald" id="reminders-dashboard-income-count">0 Pending logs</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="dashboard-charts-grid">
+                            <div class="chart-card glass">
+                                <div class="chart-header border-b">
+                                    <h4>Active Cost by Category</h4>
+                                </div>
+                                <div class="chart-container">
+                                    <canvas id="chart-reminder-category"></canvas>
+                                </div>
+                            </div>
+                            <div class="chart-card glass">
+                                <div class="chart-header border-b">
+                                    <h4>Reminder Log Statuses</h4>
+                                </div>
+                                <div class="chart-container">
+                                    <canvas id="chart-reminder-status"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sub-pane 2: My Reminders List -->
+                    <div id="reminders-sub-list" class="sub-tab-pane hidden">
+                        <div class="tab-actions-header" style="margin-top: 0;">
+                            <button type="button" class="btn btn-primary" id="btn-create-reminder"><i class="fa-solid fa-plus"></i> New Recurring Reminder</button>
+                        </div>
+
+                        <div class="layout-grid-2">
+                            <!-- Income Reminders -->
+                            <div class="card glass">
+                                <div class="card-header border-b flex-space-between">
+                                    <h4>Recurring Incomes</h4>
+                                    <span class="badge status-paid" id="reminders-income-summary">0 Active</span>
+                                </div>
+                                <div class="table-wrapper">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Title</th>
+                                                <th>Category</th>
+                                                <th>Value</th>
+                                                <th>Frequency</th>
+                                                <th>Next Due Date</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="reminders-income-table-body">
+                                            <tr>
+                                                <td colspan="6" class="text-center text-muted">No income reminders configured.</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Expense Reminders -->
+                            <div class="card glass">
+                                <div class="card-header border-b flex-space-between">
+                                    <h4>Recurring Expenses</h4>
+                                    <span class="badge status-overdue" id="reminders-expense-summary">0 Active</span>
+                                </div>
+                                <div class="table-wrapper">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Title</th>
+                                                <th>Category</th>
+                                                <th>Value</th>
+                                                <th>Frequency</th>
+                                                <th>Next Due Date</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="reminders-expense-table-body">
+                                            <tr>
+                                                <td colspan="6" class="text-center text-muted">No expense reminders configured.</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sub-pane 3: Reminders Log -->
+                    <div id="reminders-sub-log" class="sub-tab-pane hidden">
+                        <div class="card glass">
+                            <div class="card-header border-b flex-space-between">
+                                <h4>Active Reminder Occurrences Logs</h4>
+                                <span class="badge status-sent" id="reminders-log-summary">0 Logs</span>
+                            </div>
+                            <div class="table-wrapper">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Reminder Title</th>
+                                            <th>Type</th>
+                                            <th>Category</th>
+                                            <th>Expected Value</th>
+                                            <th>Due Date</th>
+                                            <th>Log Status</th>
+                                            <th>Quick Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="reminders-log-table-body">
+                                        <tr>
+                                            <td colspan="7" class="text-center text-muted">No log occurrences generated. Check active reminders and trigger dates.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
             </div>
         </main>
     </div>
@@ -893,6 +1051,96 @@
                 <button type="button" class="btn btn-primary" id="btn-select-invoice-from-preview-popup">Select &
                     Autofill</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Recurring Reminder Modal -->
+    <div id="reminder-modal" class="modal-overlay hidden" style="z-index: 2100;">
+        <div class="modal-card glass" style="max-width: 550px;">
+            <div class="modal-header">
+                <h4 id="reminder-modal-title">Configure Recurring Reminder</h4>
+                <button type="button" class="btn-close" id="close-reminder-modal">&times;</button>
+            </div>
+            <form id="reminder-form" class="app-form">
+                <div class="modal-body" style="padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem;">
+                    <input type="hidden" id="reminder-record-id">
+                    
+                    <div class="input-grid">
+                        <div class="input-group">
+                            <label for="reminder-type"><i class="fa-solid fa-arrow-right-arrow-left"></i> Reminder Type *</label>
+                            <select id="reminder-type" required>
+                                <option value="Income">Income (Money Inflow)</option>
+                                <option value="Expense" selected>Expense (Money Outflow)</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="reminder-category"><i class="fa-solid fa-tags"></i> Category *</label>
+                            <select id="reminder-category" required>
+                                <option value="SaaS">SaaS / Software</option>
+                                <option value="Marketing">Marketing</option>
+                                <option value="Subscription">Subscription</option>
+                                <option value="Ads">Ads</option>
+                                <option value="Transport">Transport</option>
+                                <option value="Salary">Salary</option>
+                                <option value="Rent">Rent / Lease</option>
+                                <option value="Utilities">Utilities</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="reminder-title"><i class="fa-solid fa-heading"></i> Title *</label>
+                        <input type="text" id="reminder-title" required placeholder="e.g. AWS Cloud Hosting">
+                    </div>
+
+                    <div class="input-grid">
+                        <div class="input-group">
+                            <label for="reminder-payment-type"><i class="fa-solid fa-percent"></i> Payment Type *</label>
+                            <select id="reminder-payment-type" required>
+                                <option value="Fixed" selected>Fixed Value (Currency)</option>
+                                <option value="Percentage">Percentage (%)</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="reminder-value" id="reminder-value-label"><i class="fa-solid fa-dollar-sign"></i> Amount Value *</label>
+                            <input type="number" id="reminder-value" required step="any" placeholder="0.00">
+                        </div>
+                    </div>
+
+                    <div class="input-grid-3" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1rem;">
+                        <div class="input-group">
+                            <label for="reminder-start-date"><i class="fa-solid fa-calendar-days"></i> Start Date *</label>
+                            <input type="date" id="reminder-start-date" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="reminder-frequency"><i class="fa-solid fa-arrows-spin"></i> Frequency *</label>
+                            <select id="reminder-frequency" required>
+                                <option value="Weekly">Weekly</option>
+                                <option value="Monthly" selected>Monthly</option>
+                                <option value="Yearly">Yearly</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="reminder-remind-interval"><i class="fa-solid fa-clock"></i> Remind Interval *</label>
+                            <select id="reminder-remind-interval" required>
+                                <option value="Immediately" selected>Immediately</option>
+                                <option value="3 days before">3 days before</option>
+                                <option value="7 days before">7 days before</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="reminder-notes"><i class="fa-regular fa-comment-dots"></i> Optional Notes</label>
+                        <textarea id="reminder-notes" rows="2" placeholder="e.g. renewal terms or contract details..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer" style="padding: 1rem; display: flex; gap: 0.5rem; justify-content: right; border-top: 1px solid var(--border-glass);">
+                    <button type="button" class="btn btn-outline" id="btn-close-reminder-form">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="btn-save-reminder">Save Reminder <i class="fa-solid fa-circle-check"></i></button>
+                </div>
+            </form>
         </div>
     </div>
 
