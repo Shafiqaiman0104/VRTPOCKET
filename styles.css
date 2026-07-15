@@ -2449,3 +2449,64 @@ input:checked+.slider:before {
 .chart-container.wide {
     height: 340px;
 }
+
+/* ==================== REMINDERS SUITE STYLES ==================== */
+.badge.type-fixed {
+    background: rgba(99, 102, 241, 0.12);
+    color: var(--primary);
+}
+
+.badge.type-percentage {
+    background: rgba(217, 70, 239, 0.12);
+    color: var(--accent);
+}
+
+.badge.due-overdue {
+    background: rgba(244, 63, 94, 0.12);
+    color: var(--rose);
+    border: 1px dashed rgba(244, 63, 94, 0.3);
+}
+
+.badge.due-soon {
+    background: rgba(245, 158, 11, 0.12);
+    color: var(--amber);
+}
+
+.badge.due-future {
+    background: rgba(16, 185, 129, 0.12);
+    color: var(--emerald);
+}
+
+.reminder-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Sub-tab navigation styling */
+.sub-tab-btn {
+    border-radius: var(--radius-sm);
+    padding: 0.45rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.sub-tab-btn.active {
+    background: var(--primary-gradient) !important;
+    color: #ffffff !important;
+    border-color: transparent !important;
+    box-shadow: 0 4px 12px var(--primary-glow);
+}
+
+.badge.status-noticed {
+    background: rgba(14, 165, 233, 0.12);
+    color: #0ea5e9;
+}
+
+.badge.status-pending {
+    background: rgba(245, 158, 11, 0.12);
+    color: var(--amber);
+}
+
+.sub-tab-pane.hidden {
+    display: none !important;
+}
